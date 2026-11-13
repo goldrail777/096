@@ -2,16 +2,22 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>コンベア錬金</title>
 <meta name="description" content="ベルトの脇に機械を並べ、流れる原料を足し算→掛け算で膨らませる工場系ローグライク。5日ごとの納期までにノルマを出荷し、組み合わせを見つけて限界を超えろ。">
 <meta name="theme-color" content="#14161d">
 <meta property="og:type" content="website">
 <meta property="og:title" content="コンベア錬金">
 <meta property="og:description" content="ベルトの脇に機械を並べ、流れる原料を足し算→掛け算で膨らませる工場系ローグライク。">
-<meta name="twitter:card" content="summary">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="コンベア錬金">
+<meta name="twitter:description" content="ベルトの脇に機械を並べ、流れる原料を足し算→掛け算で膨らませる工場系ローグライク。日替わりチャレンジも。">
 <link rel="canonical" href="https://goldrail777.github.io/096/">
 <meta property="og:url" content="https://goldrail777.github.io/096/">
+<meta property="og:image" content="https://goldrail777.github.io/096/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:image" content="https://goldrail777.github.io/096/og.png">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"VideoGame","url":"https://goldrail777.github.io/096/","name":"コンベア錬金","description":"ベルトの脇に機械を並べ、流れる原料を足し算→掛け算で膨らませる工場系ローグライク。5日ごとの納期までにノルマを出荷し、機械の組み合わせを見つけて限界を超えろ。","genre":["ローグライク","ストラテジー","シミュレーション"],"gamePlatform":"Webブラウザ","applicationCategory":"Game","operatingSystem":"Windows, macOS, iOS, Android","inLanguage":"ja","playMode":"SinglePlayer","offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"}}
 </script>
@@ -352,15 +358,6 @@ button { font-family: inherit; }
 .glyph img.spr { width: 88%; height: 88%; image-rendering: pixelated; pointer-events: none; user-select: none; }
 .glyph .star { position: absolute; top: -6px; right: -6px; font-size: 11px; line-height: 1; color: #ffd447; background: #1a1d26; border: 1px solid #ffd447; border-radius: 8px; padding: 1px 3px; text-shadow: none; }
 
-/* 縦に並べる（盤面の下に右の欄）のは、幅が狭いときと、縦長の画面だけ。横長なら 960×640 のような小さめの画面でも横に並べる（ゲーム投稿サイトの埋め込みなど） */
-@media (max-width: 760px), (max-width: 980px) and (orientation: portrait) {
-  html, body { overflow: auto; }
-  #app { height: auto; min-height: 100vh; }
-  #main { flex-direction: column; flex: none; min-height: auto; }
-  #side { width: 100%; border-left: none; border-top: 1px solid var(--line); overflow: visible; }
-  #hud { gap: 12px; }
-  .hud-block .big { font-size: 20px; }
-}
 
 /* 研究所（カード式。分類タブ → 左から1段目・2段目・3段目） */
 .rhead { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
@@ -595,6 +592,506 @@ button { font-family: inherit; }
   .btn.research-go, .btn.research-go::after, .btn.research-go .rg-badge { animation: none; }
 }
 
+/* =====================================================================
+   画面の作り（2026-11 作り直し）
+   PC    ：上に HUD ／ 左上に盤面・右に「手持ち・機械の詳細・稼働開始」 ／ 下の段いっぱいにショップ
+   スマホ：HUD ／ 盤面（横幅いっぱい） ／ ショップ（左）と手持ち（右の細い列） ／ 稼働開始
+   盤面・右の欄・ショップの大きさは ui.js の layout() が画面から計算して --board-w / --board-h に入れる（空白を出さない）
+   ===================================================================== */
+#app { height: 100vh; height: 100dvh; }
+#main {
+  flex: 1; min-height: 0; display: grid; gap: 8px; padding: 8px;
+  grid-template-columns: var(--board-w, 1fr) minmax(0, 1fr);
+  grid-template-rows: var(--board-h, 1fr) minmax(0, 1fr);
+}
+#board-wrap { grid-column: 1; grid-row: 1; padding: 0; min-width: 0; min-height: 0; position: relative; display: flex; align-items: center; justify-content: center; }
+#side { grid-column: 2; grid-row: 1; width: auto; min-width: 0; min-height: 0; border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+#dock { grid-column: 1 / 3; grid-row: 2; min-width: 0; min-height: 0; }
+#foot { display: none; }
+body.is-title #main { display: flex; padding: 0; }
+body.is-title #board-wrap { flex: 1; }
+body.is-title #side, body.is-title #dock, body.is-title #foot, body.is-title #hud { display: none; }
+body.is-title #board { cursor: default; }
+/* 高さのとても低い画面（横向きのスマホなど）：盤面は左いっぱい、右に手持ち（上）とショップ（下） */
+body.short #main { grid-template-rows: minmax(0, .8fr) minmax(0, 1.2fr); gap: 6px; padding: 6px; }
+body.short #board-wrap { grid-row: 1 / 3; }
+body.short #dock { grid-column: 2; grid-row: 2; padding: 4px 8px 6px; }
+body.short #dock .card { min-width: 132px; }
+body.short .card .detail, body.short .card .core, body.short .card .c-tags, body.short .shop-hint { display: none; }
+body.short .card .c-top .glyph { width: 36px; height: 36px; }
+body.short .card .name { font-size: 13px; }
+body.short .buy { padding: 4px 8px; }
+body.short .buy .buy-l { font-size: 12px; letter-spacing: 0; }
+body.short .buy .px-price { font-size: 14px; }
+body.short #side { padding: 6px; }
+body.short #side .tray { min-height: 0; }
+body.short .start-btn { font-size: 16px; }
+
+/* ---------- 右の欄：手持ち・機械の詳細・今日の情報・稼働開始 ---------- */
+#side .side-a { display: flex; flex-direction: column; gap: 8px; min-height: 0; flex: none; }
+#side .side-b { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+#side .start-dock { position: static; margin: 0; padding: 0; background: none; flex: none; display: flex; flex-direction: column; gap: 6px; }
+#side .side-a { overflow-y: auto; max-height: 62%; }
+#side.side-wide { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); grid-template-rows: minmax(0, 1fr); gap: 10px; }
+#side.side-wide .side-a { grid-column: 1; grid-row: 1; max-height: none; }
+#side.side-wide .side-b { grid-column: 2; grid-row: 1; }
+#side.side-wide .tray { max-height: none; }
+#side .lev { flex: none; }
+
+.hand { display: flex; flex-direction: column; gap: 6px; background: #12141a; border: 1px solid var(--line); border-radius: 10px; padding: 8px; transition: border-color .12s, box-shadow .12s; }
+.side-h { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.side-h b { color: var(--text); font-size: 14px; letter-spacing: .08em; }
+.hand-n { font-weight: 700; }
+.hand-n.full { color: #ff8f8f; }
+.kit-chip { margin-left: auto; color: var(--coin); font-weight: 900; }
+#side .tray { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; min-height: 76px; max-height: 176px; overflow-y: auto; padding: 0; border: none; background: none; align-content: start; flex-wrap: nowrap; }
+#side .tray .empty { grid-column: 1 / -1; align-self: center; color: var(--muted); font-size: 12px; padding: 0 4px; }
+.tile { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 5px 2px 4px; border-radius: 10px; background: #1b1f2a; border: 1px solid var(--line); cursor: grab; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; min-width: 0; }
+.tile:hover { border-color: var(--accent); }
+#side .tile .glyph { width: 48px; height: 48px; cursor: inherit; }
+.tile span { font-size: 10.5px; font-weight: 700; color: #c3cad8; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile.sel { border-color: var(--coin); background: #2a2410; box-shadow: 0 0 0 2px var(--coin), 0 0 14px #ffd44766; }
+.tile.sel span { color: var(--coin); }
+.hand-foot { display: flex; align-items: center; gap: 8px; }
+.stash-hint { font-size: 10.5px; color: var(--muted); flex: 1; min-width: 0; display: none; }
+#side.side-wide .stash-hint, .hand.stash-hot .stash-hint { display: block; }
+.hand.stash-hot { border-color: var(--blue); box-shadow: inset 0 0 0 2px #7fd6ff88, 0 0 18px #7fd6ff44; }
+.hand.stash-hot .stash-hint { color: var(--blue); font-weight: 900; }
+#dock.running ~ * .tray, #side .hand.run .tray { opacity: .5; }
+
+/* 設置枠を増やすボタン */
+.slot-btn { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 4px 10px; border-radius: 8px; border: 1px solid #b8952a; background: #2a2410; color: var(--text); cursor: pointer; font: inherit; line-height: 1.25; flex: none; }
+.slot-btn span { font-size: 11px; color: var(--muted); }
+.slot-btn span b { color: var(--text); }
+.slot-btn em { font-style: normal; font-size: 12px; font-weight: 900; color: var(--coin); display: flex; align-items: center; gap: 4px; }
+.slot-btn:hover:not(:disabled) { border-color: var(--coin); }
+.slot-btn:disabled { opacity: .5; cursor: default; }
+
+/* ドット絵の値段 */
+.px-price { display: inline-flex; align-items: center; gap: 3px; font-family: var(--font-dot); font-weight: 400; line-height: 1; white-space: nowrap; }
+.px-price b { font-weight: 400; font-size: 1.12em; }
+.px-price s { opacity: .65; font-size: .85em; margin-right: 2px; }
+.px-price.free b { font-size: 1em; }
+.px-coin { width: 14px; height: 14px; flex: none; }
+
+/* 機械の詳細（大きく） */
+.info.detail { flex: 1; min-height: 110px; overflow-y: auto; padding: 12px 14px; font-size: 14px; line-height: 1.65; }
+.info.detail.pinned { border-color: var(--coin); box-shadow: 0 0 0 1px #ffd44744 inset; }
+.info .hd { display: flex; gap: 12px; align-items: center; margin-bottom: 6px; }
+.info.detail .hd .glyph { width: 58px; height: 58px; flex: none; }
+.info.detail .nm { font-size: 19px; line-height: 1.3; }
+.info .rar { font-size: 11px; margin-left: 6px; font-weight: 700; }
+.info .desc { margin: 4px 0 2px; color: #dfe4ee; }
+.info.detail .meta { font-size: 12.5px; }
+.info .note { margin-top: 6px; font-size: 13px; padding: 4px 9px; border-radius: 8px; background: #1e222c; color: #cfd6e4; }
+.info .note.sale { background: #3a1a1e; color: #ffb3b3; }
+.info .note.sale b { color: #fff; }
+.info .note.star { background: #2a2410; color: #ffd447; }
+.info .note.syn { background: #2a1a33; color: #f7c8ff; }
+.info .note.sky { background: linear-gradient(90deg, #3a2a10, #3a1a33); color: #ffe27a; font-weight: 700; }
+.info .tag.sky { background: linear-gradient(90deg, #ffd447, #ff8ad8); color: #2a1000; font-weight: 900; }
+.info .tag.item { background: #1f5a48; color: #c9ffe9; }
+.live-badge { display: inline-block; margin-left: 8px; font-size: 12px; font-weight: 900; padding: 0 7px; border-radius: 6px; background: #2a2f3c; color: #ffd9a0; vertical-align: 2px; }
+.empty-hint { line-height: 1.7; }
+.empty-hint b:first-child { display: block; color: var(--text); font-size: 15px; margin-bottom: 4px; }
+.info .act-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.info .act-row > * { flex: 0 1 auto; }
+.info .act-row .btn { min-height: 38px; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; }
+.info .act-row .buy { width: 100%; }
+.info .hint { color: var(--muted); font-size: 12.5px; margin-top: 6px; }
+.info .hint b { color: var(--coin); }
+.sell-btn .px-price { color: var(--coin); }
+
+/* 今日の情報・稼働開始 */
+.day-info { font-size: 12px; }
+.day-info .boss { margin-top: 6px; padding: 6px 10px; }
+.day-info .boss .t { font-size: 14px; }
+.day-info .special-line { margin-top: 4px; }
+.daily-tag { color: #9fb7ff; margin-right: 6px; }
+.endless-tag { color: #e0b8ff; margin-right: 6px; }
+.warn { font-size: 12px; color: #ffb347; padding: 4px 9px; border-radius: 8px; background: #2a2010; border: 1px solid #5a4210; }
+.warn b { color: #fff; }
+.warn.bad { color: #ffb3b3; background: #3a1a1e; border-color: #6b2433; }
+.start-btn { font-size: 18px; padding: 12px; }
+.kbd-hint { font-size: 12px; opacity: .7; }
+.speed-row { display: flex; gap: 6px; align-items: center; }
+.speed-row > span { font-size: 12px; color: var(--muted); }
+.speed-row .btn { flex: 1; font-size: 15px; }
+.speed-row .btn.on { border-color: var(--accent); color: var(--accent); }
+#side .stats { background: #12141a; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+
+/* ---------- 下の段：ショップ ---------- */
+#dock { display: flex; flex-direction: column; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 6px 10px 8px; width: auto; height: auto; margin: 0; transition: background .12s, border-color .12s, box-shadow .12s; }
+#dock .dock-h { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); min-height: 30px; white-space: nowrap; min-width: 0; }
+#dock .dock-h > b { color: var(--text); font-size: 15px; letter-spacing: .1em; }
+.shop-hint { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.sell-hint { display: none; }
+#dock.sell-hot { border-color: var(--bad); background: #3a1a1e; box-shadow: inset 0 0 0 2px #ff6b6b88, 0 0 22px #ff6b6b55; }
+#dock.sell-hot .sell-hint { display: inline; color: #ff8f8f; font-weight: 900; font-size: 14px; }
+#dock.sell-hot .shop-hint { display: none; }
+.reroll {
+  --px: 3px; margin-left: auto; display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: none; cursor: pointer;
+  background: #2c3448; color: var(--text); font-family: var(--font-dot); font-size: 14px; flex: none;
+  box-shadow: inset -3px -3px 0 #1a1f2c, inset 3px 3px 0 #48526c;
+  clip-path: polygon(0 var(--px), var(--px) var(--px), var(--px) 0, calc(100% - var(--px)) 0, calc(100% - var(--px)) var(--px), 100% var(--px), 100% calc(100% - var(--px)), calc(100% - var(--px)) calc(100% - var(--px)), calc(100% - var(--px)) 100%, var(--px) 100%, var(--px) calc(100% - var(--px)), 0 calc(100% - var(--px)));
+}
+.reroll .px-price { color: var(--coin); }
+.reroll:hover:not(:disabled) { filter: brightness(1.2); }
+.reroll:disabled { opacity: .45; cursor: default; }
+.restock-tag { font-family: var(--font-dot); color: #2a1a00; background: var(--coin); padding: 1px 8px; animation: restockTag 1.6s ease-out both; }
+@keyframes restockTag { 0% { transform: scale(.4); opacity: 0; } 15% { transform: scale(1.3); opacity: 1; } 30% { transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; } }
+#dock.running .cards { opacity: .45; pointer-events: none; filter: grayscale(.4); }
+/* ショップの段：左にカード、右端に稼働開始 */
+#dock .dock-body { flex: 1; min-height: 0; display: flex; gap: 10px; }
+.dock-start .warn { font-size: 11.5px; padding: 3px 8px; }
+.dock-start { flex: none; width: 230px; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; padding: 6px 0 6px 10px; border-left: 1px dashed var(--line); min-height: 0; overflow: hidden; }
+.dock-start .start-btn { flex: none; min-height: 52px; }
+.dock-start.run { justify-content: center; }
+.ds-run { font-weight: 900; color: var(--accent); text-align: center; }
+body.short .dock-start { width: 150px; }
+body.short .dock-start .dock-sub, body.short .dock-start .warn { display: none; }
+#dock .cards { flex: 1; min-height: 0; display: flex; flex-direction: row; gap: 10px; overflow-x: auto; overflow-y: hidden; padding: 6px 2px 6px; scrollbar-width: thin; scrollbar-color: #3a4152 transparent; touch-action: pan-x pan-y; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+#dock .cards::-webkit-scrollbar { height: 6px; }
+#dock .cards::-webkit-scrollbar-thumb { background: #3a4152; border-radius: 3px; }
+
+/* カード（機械：紺の板／消耗品：緑の券） */
+#dock .card {
+  position: relative; flex: 1 1 0; min-width: 178px; max-width: 262px; height: 100%; width: auto; display: flex; flex-direction: column; gap: 4px;
+  padding: 0 9px 8px; border-radius: 12px; border: 2px solid #3a4558; color: var(--text); text-align: left; overflow: hidden; cursor: pointer;
+  background: linear-gradient(#222839, #181c27); grid-template-columns: none; touch-action: pan-x pan-y; transition: transform .1s, border-color .1s, box-shadow .15s;
+}
+#dock .card:hover { transform: translateY(-3px); border-color: var(--accent); }
+#dock .card > * { flex-shrink: 0; }
+#dock .card > .detail { flex-shrink: 1; }
+#dock .card.picked { border-color: var(--coin); box-shadow: 0 0 0 2px #ffd44788, 0 0 20px #ffd44744; }
+.card .c-kind { margin: 0 -9px 2px; padding: 2px 4px 2px 9px; min-height: 22px; display: flex; gap: 6px; align-items: center; font-size: 10.5px; font-weight: 900; letter-spacing: .1em; background: #2c3448; color: #b9c6e4; }
+.card .c-kind em { font-style: normal; font-weight: 700; letter-spacing: 0; color: var(--rc, #9fb3c8); }
+.card .lock { position: static; margin-left: auto; width: 24px; height: 20px; border-radius: 6px; border: 1px solid #ffffff22; background: #0005; font-size: 11px; cursor: pointer; padding: 0; opacity: .7; line-height: 1; }
+.card .lock:hover, .card .lock.on { opacity: 1; border-color: #7fd6ff; }
+#dock .card.locked { box-shadow: 0 0 0 2px #7fd6ff, 0 0 14px #7fd6ff55; }
+.card.mach.r2 { border-color: #3fa877; }
+.card.mach.r2 .c-kind { background: #1f3b30; }
+#dock .card.mach.r3 { border-color: transparent; background: linear-gradient(#272142, #1a172c) padding-box, linear-gradient(135deg, #b46cff, #ffd447, #ff8ad8, #b46cff) border-box; box-shadow: 0 0 14px #c58cff44; }
+.card.mach.r3 .c-kind { background: #3a2a52; }
+#dock .card.mach.r3::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(110deg, transparent 35%, #ffffff1c 50%, transparent 65%); background-size: 260% 100%; animation: cardShine 3.2s linear infinite; }
+@keyframes cardShine { from { background-position: 130% 0; } to { background-position: -130% 0; } }
+#dock .card.item { border: 2px dashed #3fbf9a; background: repeating-linear-gradient(135deg, #16392f 0 10px, #12302a 10px 20px); }
+.card.item .c-kind { background: #1f5a48; color: #c9ffe9; }
+.card.item .c-kind em { color: #8fe8c8; }
+.glyph.item-g { border-radius: 50%; background: radial-gradient(circle at 50% 40%, var(--ic, #3fbf9a), #0d1a16 82%); border: 2px solid var(--ic, #3fbf9a); font-family: var(--font-dot); font-size: 22px; font-weight: 400; }
+.card .c-top { display: flex; gap: 8px; align-items: center; min-height: 0; }
+.card .c-top .glyph { width: 50px; height: 50px; flex: none; }
+.c-nm { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.card .name { font-size: 15px; font-weight: 900; line-height: 1.2; }
+.c-tags { display: flex; flex-wrap: wrap; gap: 3px; padding: 0; }
+.c-tags span { font-size: 10px; font-weight: 900; border-radius: 4px; padding: 0 5px; line-height: 16px; white-space: nowrap; }
+.t-syn { background: #f7a8ff; color: #3a0d33; }
+.t-star { background: #ffd447; color: #2a2000; }
+.t-belt { background: #ffb347; color: #2a1a00; }
+.t-big { background: #c9a2ff; color: #1a0d33; }
+.t-item { background: #7fe8c8; color: #06281e; }
+.t-up { background: #4a2326; color: #ffb3b3; }
+.t-sky { background: linear-gradient(90deg, #ffd447, #ff8ad8); color: #2a1000; }
+.card .core { font-size: 13px; font-weight: 900; color: var(--accent); line-height: 1.35; }
+.card.item .core { color: #8fe8c8; }
+.card .detail { flex: 1; min-height: 0; font-size: 11.5px; color: #9aa3b6; line-height: 1.45; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.card .detail b { color: #c3cad8; font-weight: 700; }
+.card .detail i { font-style: normal; }
+
+/* 特価：赤い帯・赤く光る縁・赤い値段（半額の印） */
+.card .c-kind.sale { background: repeating-linear-gradient(135deg, #d92b2b 0 8px, #b81f1f 8px 16px); color: #fff; }
+.card .c-kind.sale em { color: #ffe27a; font-size: 12px; }
+#dock .card.sale:not(.sold) { border-color: #ff5a5a; animation: salePulse 1.4s ease-in-out infinite; }
+@keyframes salePulse { 0%, 100% { box-shadow: 0 0 0 1px #ff5a5a66, 0 0 12px #ff5a5a44; } 50% { box-shadow: 0 0 0 2px #ff5a5a, 0 0 26px #ff5a5a88; } }
+.sale-sticker { position: absolute; left: 36px; top: 54px; z-index: 1; font-family: var(--font-dot); font-size: 12px; color: #fff; background: #ff3b3b; padding: 1px 4px; transform: rotate(-12deg); box-shadow: 0 2px 0 #7a1010; pointer-events: none; }
+
+/* 購入ボタン（ドット絵の札） */
+.buy {
+  --px: 3px; margin-top: auto; flex: none; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  padding: 6px 10px; border: none; cursor: pointer; font-family: var(--font-dot); color: #2a1a00; background: #ffd447;
+  box-shadow: inset -3px -3px 0 #c27a00, inset 3px 3px 0 #fff3a0;
+  clip-path: polygon(0 var(--px), var(--px) var(--px), var(--px) 0, calc(100% - var(--px)) 0, calc(100% - var(--px)) var(--px), 100% var(--px), 100% calc(100% - var(--px)), calc(100% - var(--px)) calc(100% - var(--px)), calc(100% - var(--px)) 100%, var(--px) 100%, var(--px) calc(100% - var(--px)), 0 calc(100% - var(--px)));
+}
+.buy:hover:not(:disabled) { filter: brightness(1.12); }
+.buy:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 3px 3px 0 #c27a00, inset -3px -3px 0 #fff3a0; }
+.buy .buy-l { font-size: 15px; letter-spacing: .12em; }
+.buy .px-price { font-size: 17px; }
+.buy .px-coin { width: 16px; height: 16px; }
+.buy.poor { background: #4a1f24; color: #ff9a9a; box-shadow: inset -3px -3px 0 #2a0f12, inset 3px 3px 0 #6b2a30; cursor: not-allowed; }
+.buy.full, .buy.na, .buy.sold { background: #2c3140; color: #8b93a5; box-shadow: inset -3px -3px 0 #1a1d26, inset 3px 3px 0 #3c4255; cursor: not-allowed; }
+.buy.poor .buy-l, .buy.full .buy-l, .buy.na .buy-l { font-size: 12px; letter-spacing: 0; }
+.buy.sale.can { background: #ff4d4d; color: #fff; box-shadow: inset -3px -3px 0 #a01c1c, inset 3px 3px 0 #ffb0b0; }
+.buy.sale .px-price b { color: #ffe27a; }
+.buy.sale s { color: #ffd0d0; }
+.buy.big { padding: 9px 14px; }
+.buy.big .buy-l { font-size: 17px; }
+.buy.big .px-price { font-size: 19px; }
+.card.sold > :not(.sold-stamp) { filter: grayscale(.8) brightness(.5); }
+#dock .card.sold { pointer-events: none; animation: none; }
+.sold-stamp { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%) rotate(-18deg); font-family: var(--font-dot); font-size: 26px; letter-spacing: .12em; color: #ff6b6b; border: 3px solid #ff6b6b; border-radius: 4px; padding: 0 10px; background: #0009; pointer-events: none; }
+
+/* 入荷：カードが上から1枚ずつ配られ、光が走る */
+#dock .card.pop { animation: cardDeal .55s cubic-bezier(.2, 1.3, .4, 1) both; animation-delay: calc(var(--i) * 110ms); }
+#dock .card.sale.pop { animation: cardDeal .55s cubic-bezier(.2, 1.3, .4, 1) both, salePulse 1.4s ease-in-out 1s infinite; animation-delay: calc(var(--i) * 110ms), 1s; }
+@keyframes cardDeal {
+  0% { opacity: 0; transform: translateY(-60px) rotate(-10deg) scale(.6); }
+  55% { opacity: 1; transform: translateY(6px) rotate(1.5deg) scale(1.05); }
+  100% { opacity: 1; transform: none; }
+}
+#dock .card.pop::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 30%, #ffffff70 50%, transparent 70%); background-size: 260% 100%; background-position: 130% 0; animation: dealShine .6s ease-out both; animation-delay: calc(var(--i) * 110ms + .3s); }
+@keyframes dealShine { from { background-position: 130% 0; opacity: 1; } to { background-position: -130% 0; opacity: 0; } }
+
+/* ドラッグの絵：売却・手持ちに戻す */
+.drag-ghost span { display: none; }
+.drag-ghost.stash .g-stash, .drag-ghost.sell .g-sell { display: block; }
+.drag-ghost.sell .g-sell { background: #5a1f24; border-color: #ff6b6b; }
+.drag-ghost.touch { transform: translate(-50%, -50%); }
+
+/* 納期の日で、まだノルマに届いていない */
+#hud.due { animation: dueHud 1s ease-in-out infinite; }
+@keyframes dueHud { 0%, 100% { background: linear-gradient(#2a1418, #1a0e12); box-shadow: inset 0 -2px 0 #ff6b6b66; } 50% { background: linear-gradient(#4a1820, #2a1016); box-shadow: inset 0 -3px 0 #ff6b6b, 0 0 20px #ff6b6b55; } }
+#hud.due #hud-dayof { color: #ff8f8f; }
+
+/* スマホの詳細バー（PCでは出さない） */
+#detail-bar { display: none; }
+
+/* ---------- タイトル画面：後ろでデモが動く。カードは小さく ---------- */
+#overlay.title-mode { background: radial-gradient(circle at 50% 50%, #05060a66, #05060add); backdrop-filter: none; }
+#overlay.title-mode #overlay-card { width: min(410px, 100%); padding: 20px 22px; background: #171a22eb; }
+.title-card h1 { text-align: center; font-size: 42px !important; }
+.title-card .lead { font-size: 13px !important; text-align: center; }
+.title-card .menu-btns { gap: 8px; margin-top: 14px; }
+.title-best { font-size: 11px !important; margin-top: 12px !important; }
+.daily-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; background: linear-gradient(#7aa2ff, #4d6bff); color: #fff; box-shadow: 0 4px 0 #23317a; }
+.daily-btn b { font-size: 15px; }
+.daily-btn small { font-size: 11px; font-weight: 500; opacity: .92; }
+.daily-btn:active { box-shadow: 0 2px 0 #23317a; }
+/* 日替わりの研究 */
+.daily-rhead h2 small { font-size: 14px; color: var(--muted); margin-left: 6px; font-weight: 700; }
+.daily-rhead .patents b { color: var(--coin); font-size: 24px; }
+.btn.daily-go { background: linear-gradient(#7aa2ff, #4d6bff); color: #fff; box-shadow: 0 4px 0 #23317a; font-size: 15px; padding: 8px 18px; }
+.daily-lead { font-size: 13px !important; }
+
+/* ---------- 日の終わり・ランの終わり：左右2列（スクロールしないで見られる） ---------- */
+#overlay-card.result { width: min(1000px, 100%); padding: 18px 22px; }
+#overlay-card.result h2 { margin-bottom: 10px; }
+.res-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.res-grid .result-big { font-size: 34px; margin: 0 0 6px; }
+.res-grid .phase-prog { margin: 0 0 8px; }
+.res-grid .tut-note { margin: 0 0 8px; }
+.coin-box { padding: 10px 12px; border-radius: 12px; background: linear-gradient(135deg, #2e2610, #1c180b); border: 1px solid #b8952a; }
+.cb-top { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
+.cb-l { font-size: 12.5px; color: #e8d9a8; font-weight: 700; }
+.cb-v { font-size: 32px; font-weight: 900; color: var(--coin); font-variant-numeric: tabular-nums; text-shadow: 0 0 14px #ffd44766; margin-left: auto; line-height: 1.1; }
+.cb-v small { font-size: 15px; margin-left: 2px; }
+.cb-have { flex-basis: 100%; text-align: right; font-size: 11.5px; color: var(--muted); }
+.cb-have b { color: var(--text); }
+.cb-parts { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.cb-parts span { font-size: 11.5px; padding: 1px 8px; border-radius: 999px; background: #0006; color: #d9cfae; }
+.cb-parts span b { color: var(--coin); }
+.cb-parts span.gold { background: #ffd44722; color: #ffe9a0; border: 1px solid #ffd44755; }
+.cb-run { font-size: 11.5px; color: var(--muted); margin-top: 5px; }
+.cb-run b { color: var(--coin); }
+.cb-slot { margin-top: 6px; font-size: 13px; color: var(--good); font-weight: 900; }
+.cb-slot b { color: #fff; }
+.res-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.res-chips span { font-size: 12px; padding: 3px 9px; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--line); color: #c3cad8; }
+.res-chips span b { color: var(--text); }
+.coin-box.anim, .res-chips.anim, .reward.anim { opacity: 0; animation: fadeUp .3s ease-out forwards; animation-delay: var(--d); }
+#overlay-card .next-phase { font-size: 13px; margin: 0 0 10px; padding: 8px 12px; border-radius: 10px; border: 1px dashed #b8952a; color: #c3cad8; line-height: 1.6; text-align: left; }
+.next-phase b { color: var(--text); }
+.next-boss { font-size: 13px; color: #ffb3c0; padding: 6px 10px; border-radius: 10px; background: #2a1018; border: 1px solid #6b2433; margin: 0 0 10px; }
+.reward-h { margin: 0 0 8px; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; font-size: 16px; color: var(--coin); }
+.reward-h span { font-size: 12px; color: var(--muted); font-weight: 500; }
+.rewards { display: flex; flex-direction: column; gap: 8px; }
+.reward { padding: 10px 12px; gap: 12px; width: 100%; }
+.reward .rw-body { flex: 1; min-width: 0; }
+.reward .desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.reward .glyph { width: 44px; height: 44px; }
+.rw-go {
+  --px: 3px; flex: none; font-family: var(--font-dot); font-size: 13px; color: #2a1a00; background: var(--coin); padding: 5px 9px;
+  box-shadow: inset -3px -3px 0 #c27a00, inset 3px 3px 0 #fff3a0;
+  clip-path: polygon(0 var(--px), var(--px) var(--px), var(--px) 0, calc(100% - var(--px)) 0, calc(100% - var(--px)) var(--px), 100% var(--px), 100% calc(100% - var(--px)), calc(100% - var(--px)) calc(100% - var(--px)), calc(100% - var(--px)) 100%, var(--px) 100%, var(--px) calc(100% - var(--px)), 0 calc(100% - var(--px)));
+}
+.reward:hover .rw-go { background: #fff3a0; }
+.res-r .tipbox { margin-top: 12px; }
+.res-r .menu-btns { margin-top: 10px; }
+.hi-invite { margin-top: 0; }
+/* 完走：このあとの遊び方 */
+.mode-pick { display: flex; flex-direction: column; gap: 8px; }
+.mp-h { font-weight: 900; color: var(--coin); font-size: 15px; }
+.mode-btn { display: flex; flex-direction: column; gap: 4px; text-align: left; padding: 12px 14px; border-radius: 12px; border: 2px solid; cursor: pointer; font: inherit; color: var(--text); transition: filter .1s, transform .1s; }
+.mode-btn > b { font-size: 17px; }
+.mode-btn span { font-size: 12.5px; color: #c3cad8; line-height: 1.55; }
+.mode-btn span b { color: #fff; }
+.mode-btn.endless { border-color: #b46cff; background: linear-gradient(135deg, #2a1a40, #1a1428); box-shadow: 0 0 18px #b46cff44; }
+.mode-btn.endless > b { color: #e0b8ff; }
+.mode-btn.hi { border-color: #b8952a; background: linear-gradient(135deg, #3a3010, #241d0a); }
+.mode-btn.hi > b { color: var(--coin); }
+.mode-btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+/* ランの終わり */
+.over-stats { display: grid; gap: 2px; margin-top: 6px; }
+.over-stats > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; padding: 5px 0; border-bottom: 1px dashed var(--line); font-size: 14px; }
+.over-stats span { color: var(--muted); font-size: 13px; }
+.over-stats b { margin-left: auto; font-variant-numeric: tabular-nums; }
+.over-stats em { flex-basis: 100%; text-align: right; font-style: normal; font-size: 12px; color: var(--muted); }
+.res-grid.over .share-row { margin-top: 0; }
+.res-grid .daily-box { margin: 0 0 8px; }
+.res-grid .patent-gain { margin: 0 0 6px; }
+.rb-q { font-size: 18px; color: var(--muted); }
+.ach-line { color: var(--coin) !important; font-weight: 900; font-size: 13px !important; }
+.res-grid .rec-line { font-size: 13px !important; }
+
+/* 結果のシェア */
+.share-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.share-row .btn { flex: 1 1 180px; width: auto; }
+.btn.x-btn { background: #000; color: #fff; box-shadow: 0 3px 0 #333; border: 1px solid #555; }
+.daily-box { margin: 10px 0; padding: 10px 12px; border-radius: 12px; background: linear-gradient(135deg, #16223f, #141a2c); border: 1px solid #4d6bff88; text-align: left; }
+.daily-box .t { font-weight: 900; color: #9fb7ff; }
+.daily-box .d { font-size: 13px; color: #c3cde6; margin-top: 4px; line-height: 1.6; }
+.daily-box b { color: var(--blue); }
+.miss-line { color: #ffb3b3 !important; text-align: center; font-weight: 900; font-size: 15px !important; margin-top: 0 !important; }
+.miss-line b { color: #fff; }
+.hist-row.daily { border-color: #4d6bff66; }
+.sheet-lev .lev { margin: 8px 0; }
+.start-dock.sheet { position: static; margin: 8px 0 0; padding: 8px; background: #12141a; border-radius: 10px; }
+
+/* ---------- スマホ・縦長 ---------- */
+@media (max-width: 760px), (orientation: portrait) and (max-width: 1100px) {
+  html, body { overflow: hidden; height: 100%; }
+  #app { height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+  #hud { min-height: 48px; height: 48px; flex: none; flex-wrap: nowrap; gap: 10px; padding: 4px 8px; padding-top: max(4px, env(safe-area-inset-top)); }
+  .hud-opt { display: none !important; }
+  .hud-block .label { font-size: 9px; }
+  .hud-block .big { font-size: 17px; }
+  .hud-block .sub { font-size: 11px; }
+  .hud-block.quota { min-width: 0; flex: 1; max-width: none; }
+  #hud-qlabel { display: none; }
+  .bar { height: 6px; margin-top: 2px; }
+  .hud-tools { margin-left: 0; }
+  .hud-tools button { min-height: 38px; min-width: 40px; padding: 4px 8px; }
+  #main { display: grid; padding: 0 4px calc(4px + env(safe-area-inset-bottom)); gap: 4px; grid-template-columns: minmax(0, 1fr) 84px; grid-template-rows: auto minmax(0, 1fr) 48px; }
+  #board-wrap { grid-column: 1 / 3; grid-row: 1; width: 100%; aspect-ratio: 13 / 9; max-height: 46dvh; padding: 2px 0 0; }
+  #dock { grid-column: 1; grid-row: 2; padding: 4px 6px 6px; border-radius: 10px; gap: 3px; }
+  #side { grid-column: 2; grid-row: 2; padding: 4px; border-radius: 10px; gap: 4px; display: flex; }
+  #side .side-b, #side .day-info, #side .stats, #side .lev, .dock-start { display: none; }
+  #side .side-a { flex: 1; min-height: 0; max-height: none; overflow: hidden; display: flex; }
+  #side .hand { flex: 1; min-height: 0; padding: 4px; gap: 4px; border: none; background: none; }
+  #side .side-h { flex-direction: column; align-items: flex-start; gap: 0; font-size: 9.5px; line-height: 1.3; }
+  #side .side-h b { font-size: 11px; }
+  .kit-chip { margin-left: 0; }
+  #side .tray { grid-template-columns: 1fr; max-height: none; flex: 1; min-height: 0; gap: 4px; }
+  #side .tile .glyph { width: 40px; height: 40px; }
+  .tile span { font-size: 9.5px; }
+  .hand-foot { flex-direction: column; align-items: stretch; }
+  .stash-hint { display: none; }
+  .slot-btn { width: 100%; padding: 3px 4px; align-items: center; }
+  .slot-btn span { font-size: 9.5px; }
+  .slot-btn em { font-size: 11px; }
+  #foot { grid-column: 1 / 3; grid-row: 3; display: flex; gap: 6px; }
+  #foot .info-chip { width: 82px; flex: none; padding: 0; position: relative; font-size: 13px; }
+  #foot .info-chip .dot { position: absolute; top: 6px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: #ff6b6b; box-shadow: 0 0 6px #ff6b6b; }
+  #foot .start-big { flex: 1; font-size: 19px; padding: 0; }
+  #foot .speed-row { flex: 1; }
+  body.is-title #main { display: flex; padding: 0; }
+  body.is-title #board-wrap { align-items: flex-start; padding-top: 8px; aspect-ratio: auto; max-height: none; }
+  /* ショップ：2列のカードを、指で縦にスクロール */
+  #dock .dock-h { min-height: 26px; gap: 6px; }
+  #dock .dock-h > b { font-size: 13px; }
+  .shop-hint { font-size: 10px; }
+  .reroll { padding: 4px 8px; font-size: 12px; gap: 5px; }
+  #dock .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow-x: hidden; overflow-y: auto; align-content: start; gap: 6px; padding: 4px 1px; touch-action: pan-y; }
+  #dock .card { min-width: 0; max-width: none; height: auto; min-height: 150px; padding: 0 7px 7px; touch-action: pan-y; }
+  #dock .card:hover { transform: none; }
+  .card .c-kind { margin: 0 -7px 2px; padding-left: 7px; }
+  .card .detail { display: none; }
+  .card.item .c-kind em, .shop-hint { display: none; }
+  .card .c-top .glyph { width: 40px; height: 40px; }
+  .card .name { font-size: 13px; }
+  .card .core { font-size: 12px; flex: 1; }
+  .sale-sticker { left: 26px; top: 46px; font-size: 11px; }
+  .buy { padding: 5px 8px; }
+  .buy .buy-l { font-size: 13px; letter-spacing: .05em; }
+  .buy .px-price { font-size: 15px; }
+  .buy .px-coin { width: 14px; height: 14px; }
+  /* チュートリアルの案内は、盤面を隠さないように画面の下（稼働開始ボタンの上）に出す */
+  #coach { position: fixed; top: auto; bottom: calc(60px + env(safe-area-inset-bottom)); left: 8px; right: 8px; width: auto; transform: none; font-size: 12px; padding: 6px 10px; line-height: 1.5; }
+  #banner { font-size: 34px; }
+  #banner.unit { font-size: 44px; }
+  #ach-toasts { top: 52px; right: 8px; }
+  #overlay { padding: 8px; }
+  #overlay-card { padding: 16px; max-height: 94vh; max-height: 94dvh; }
+  #overlay-card h2 { font-size: 21px; }
+  .result-big { font-size: 32px; }
+  #overlay.sheet-mode { align-items: flex-end; }
+  #overlay.sheet-mode #overlay-card { border-radius: 16px 16px 10px 10px; }
+  /* タイトル：上にデモの盤面、下にカード */
+  #overlay.title-mode { align-items: flex-end; background: linear-gradient(#05060a22, #05060a99 35%, #05060add); }
+  .title-card h1 { font-size: 34px !important; }
+  /* 結果：1列に詰める */
+  .res-grid { grid-template-columns: 1fr; gap: 8px; }
+  .pc-only { display: none !important; }
+  #overlay-card.result { padding: 12px; }
+  #overlay-card.result h2 { font-size: 19px; margin-bottom: 6px; }
+  .res-grid .result-big { font-size: 26px; margin-bottom: 4px; }
+  .res-grid .phase-prog { padding: 7px 10px; margin-bottom: 6px; }
+  .coin-box { padding: 7px 10px; }
+  .cb-v { font-size: 24px; }
+  .cb-parts span { font-size: 10.5px; padding: 0 6px; }
+  .res-chips { margin-top: 6px; gap: 4px; }
+  .res-chips span { font-size: 11px; padding: 2px 7px; }
+  #overlay-card .next-phase { font-size: 12px; padding: 6px 10px; margin-bottom: 6px; }
+  .reward-h { font-size: 14px; margin-bottom: 6px; }
+  .rewards { gap: 6px; }
+  .reward { padding: 7px 10px; gap: 10px; }
+  .reward .glyph { width: 36px; height: 36px; }
+  .reward .name { font-size: 14px; }
+  .reward .desc { -webkit-line-clamp: 1; }
+  .over-stats > div { font-size: 13px; padding: 2px 0; }
+  .over-stats em { flex-basis: auto; font-size: 11px; }
+  .res-grid.over .share-row { gap: 6px; }
+  .res-grid.over .share-row .btn { flex: 1 1 130px; font-size: 13px; padding: 8px 6px; }
+  .res-grid.over .menu-btns { gap: 6px; margin-top: 8px; }
+  .res-grid.over .menu-btns .btn { padding: 8px; font-size: 14px; }
+  .res-grid.over .btn.research-go.big { padding: 8px 12px; }
+  .res-grid.over .btn.research-go .rg-ico { font-size: 20px; }
+  .res-grid.over .go-hint { display: none; }
+  .res-grid .patent-gain { padding: 7px 10px; }
+  .res-grid .patent-gain .pg-v { font-size: 26px; }
+  .res-grid .daily-box { padding: 7px 10px; }
+  .res-grid .daily-box .d { font-size: 12px; line-height: 1.5; }
+  .res-grid .miss-line { font-size: 13px !important; margin-bottom: 4px !important; }
+  .res-grid .tut-note { font-size: 12px; padding: 7px 10px; }
+
+  /* 詳細バー：機械やショップのカードをタップしたときだけ、盤面の上に重ねる（大きめの文字で全文） */
+  #detail-bar { display: block; position: absolute; left: 4px; right: 4px; top: 4px; z-index: 6; background: #161922f5; border: 2px solid var(--coin); border-radius: 12px; padding: 8px 10px; box-shadow: 0 8px 24px #000a; max-height: calc(100% - 8px); overflow-y: auto; font-size: 13.5px; line-height: 1.55; min-height: 0; }
+  #detail-bar.shop { border-color: var(--blue); }
+  #detail-bar.hidden { display: none; }
+  #detail-bar .hd { display: flex; gap: 10px; align-items: center; margin-bottom: 4px; padding-right: 38px; }
+  #detail-bar .hd .glyph { width: 46px; height: 46px; flex: none; }
+  #detail-bar .nm { font-weight: 900; font-size: 16px; }
+  #detail-bar .meta { font-size: 11.5px; }
+  #detail-bar .note { font-size: 12px; }
+  .db-x { position: absolute; right: 6px; top: 6px; width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line); background: #232734; color: var(--text); font-size: 16px; cursor: pointer; z-index: 1; }
+  .db-btns { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .db-btns .btn { flex: none; min-height: 38px; padding: 4px 12px; display: inline-flex; align-items: center; gap: 6px; }
+  .db-btns .buy { width: 100%; }
+  .db-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+}
+@media (max-width: 380px) {
+  .hud-block .big { font-size: 15px; }
+}
+/* 横向きのスマホなど、高さがとても低い画面 */
+@media (min-width: 761px) and (max-height: 560px) {
+  #hud { min-height: 44px; padding: 3px 12px; }
+  .hud-block .big { font-size: 17px; }
+  #overlay-card.result { padding: 12px 16px; }
+  .res-grid .result-big { font-size: 26px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #dock .card.pop, #dock .card.pop::after, #dock .card.mach.r3::before, #dock .card.sale, #hud.due, .restock-tag { animation: none !important; }
+}
+
 </style>
 </head>
 <body>
@@ -620,22 +1117,22 @@ button { font-family: inherit; }
       <span class="label">コイン</span>
       <span class="big coin" id="hud-coins">0</span>
     </div>
-    <div class="hud-block">
+    <div class="hud-block hud-opt">
       <span class="label">設置</span>
       <span class="big" id="hud-machines">0/5</span>
     </div>
-    <div class="hud-block">
+    <div class="hud-block hud-opt">
       <span class="label">原料</span>
       <span class="big" id="hud-items">0</span>
     </div>
-    <div class="hud-block">
+    <div class="hud-block hud-opt">
       <span class="label">期</span>
       <span class="big order-name" id="hud-phase">-</span>
     </div>
     <div class="hud-tools">
-      <button id="btn-speed" title="速度 (1/2/3キー)">×1</button>
-      <button id="btn-mute" title="サウンド">♪</button>
-      <button id="btn-menu" title="タイトルへ">≡</button>
+      <button id="btn-speed" class="hud-opt" title="速度 (1/2/3キー)">×1</button>
+      <button id="btn-mute" class="hud-opt" title="サウンド">♪</button>
+      <button id="btn-menu" title="メニュー">≡</button>
     </div>
   </header>
   <main id="main">
@@ -643,8 +1140,11 @@ button { font-family: inherit; }
       <canvas id="board"></canvas>
       <div id="banner"></div>
       <div id="coach" class="hidden"></div>
+      <div id="detail-bar" class="info hidden"></div>
     </div>
     <aside id="side"></aside>
+    <div id="dock"></div>
+    <div id="foot"></div>
   </main>
   <div id="overlay" class="hidden"><div id="overlay-card"></div></div>
 </div>
@@ -662,6 +1162,11 @@ const PHASES = 6; // 完走までの期の数
 // ハイスコアモード：完走のあと HISCORE_DAYS 日、ノルマなしで出荷した合計を競う。最後に、1兆（10^HISCORE_PATENT_FROM）を超えた桁ぶんの特許
 const HISCORE_DAYS = 5;
 const HISCORE_PATENT_FROM = 12;
+// エンドレス：完走のあと、第7期・第8期…と期を続ける（納期に届かなかったらおしまい）。
+// 第7期のノルマは第6期の 10^ENDLESS_POW 倍、そこから1期ごとに桁の伸びが +1 ずつ増える（10^6 → 10^7 → 10^8 …）ので、どこかで必ず止まる
+const ENDLESS_POW = 6;
+// 日替わりチャレンジの研究ポイント：その日だけの研究に使う。全員同じ数が配られる（ふだんの研究・特許は使わない）
+const DAILY_RP = 60;
 const MAX_DAYS = PHASE_DAYS * PHASES; // 完走までにかかる日数の最大（早く達成すればもっと短い）
 
 // テストプレイ用の機能（研究所の「テストモード」）。完成版では false にするだけで消える
@@ -684,12 +1189,19 @@ const TIERS = [
 // 発動順: 変換 → 加算 → 乗算 → 特殊
 const KIND_PRIO = { transform: 0, add: 1, mult: 2, special: 3, passive: 9 };
 
-// 盤面の設置枠：最初は5台。コインで1枠ずつ増やせる（値段は2.5倍ずつ）
+// 盤面の設置枠：最初は5台。増やし方は2つ
+// 1) 納期の日より前にノルマを達成する（前倒し達成）と、確定で +1。納期の日ちょうどの達成では増えない
+// 2) コインで1枠ずつ買う（7枚から、1.8倍ずつ：7 → 13 → 23 → 41 → 73 → 132…）
+// 前は日報ボーナスの抽選にも「設置枠 +1」があったが、運で盤面の大きさが決まるのでなくした
 const START_SLOTS = 5;
-const BENCH = 2; // 盤面の枠より何台多く持てるか
+const BENCH = 4; // 盤面の枠より何台多く持てるか（前は2。手持ちを右の欄に大きく出すようにしたので、控えを多く持てるようにした）
+const SLOT_BASE = 7;
+const SLOT_GROWTH = 1.8;
 function slotCost(bought) {
-  return niceRound(8 * Math.pow(2.5, bought));
+  return niceRound(SLOT_BASE * Math.pow(SLOT_GROWTH, bought));
 }
+// 公開している場所（結果のポスト・戦績カードに入れる）。tools/build-share.js の --url= で書き換わる
+const GAME_URL = 'https://goldrail777.github.io/096/';
 
 // ===== 機械 =====
 // apply(c) の c は game.js の makeCtx() を参照
@@ -953,6 +1465,66 @@ const MACHINES = {
   },
 };
 
+// ショップのカードに太字で出す「ひとこと」と、盤面の機械に付ける小さなバッジ（数字で効く機械のバッジは game.js の badgeOf が今の倍率で作る）
+// 何に反応するかだけを書く（相方の名前は書かない）
+const MACHINE_SHORT = {
+  grinder: ['価値 +2', '+2'],
+  cooler: ['隣の「×」を +1', '冷却'],
+  prism: ['隣の種類だけ ×', '×種'],
+  amp: ['隣の +・× が2倍', '増幅'],
+  furnace: ['価値 ×2', '×2'],
+  burner: ['熱 +2', '熱+2'],
+  twin: ['×1.5（並べると ×2.5）', '×1.5'],
+  quench: ['熱を倍率に変える', '急冷'],
+  bellows: ['隣の炉の熱 +1', '送風'],
+  sieve: ['石に +4', '+4'],
+  mason: ['石に ×2', '×2'],
+  melter: ['×30・ランク -1', '×30'],
+  transmuter: ['ランク +1', '錬成'],
+  goldsmith: ['ランクが高いほど ×', '×6'],
+  alchemist: ['ランクアップで ×3', '錬術'],
+  lottery: ['15%で ×10', '抽選'],
+  cat: ['隣の運を上げる', '招福'],
+  catalyst: ['次の × をもう1回', '触媒'],
+  cursed: ['×5・25%で消滅', '×5'],
+  splitter: ['2個に分ける', '分裂'],
+  resonator: ['分身に ×3.5', '×3.5'],
+  thunder: ['8回ごとに全体へ雷', '落雷'],
+  battery: ['隣の必要回数 半分', '蓄電'],
+  duplicator: ['4回ごとに複製', '複製'],
+  toll: ['4個ごとにコイン +1', '集金'],
+  exchange: ['コインを払って ×', '換金'],
+  vault: ['持ちコインで ×', '金庫'],
+  piggy: ['日の終わりに利息', '貯金'],
+  echo: ['横の機械が2回', '反響'],
+  artisan: ['当たるたび倍率↑', '匠'],
+  pump: ['5マス巻き戻す', '還流'],
+};
+for (const [t, [short, badge]] of Object.entries(MACHINE_SHORT)) {
+  MACHINES[t].short = short;
+  MACHINES[t].badge = badge;
+}
+// 青天井の機械：組み合わせ次第で倍率に上限がない（熱・雷の回数・当たった回数・持ちコインで伸びる）。
+// ショップのカードに「青天井」の印を付け、発動したときの倍率を大きな札で見せる
+const SKY_TYPES = new Set(['quench', 'thunder', 'artisan', 'vault', 'exchange']);
+for (const t of SKY_TYPES) MACHINES[t].sky = true;
+
+// ===== 消耗品（ショップに1〜2枠まざる。買ったその場で効く。持ち物の枠は使わない） =====
+// ok(R)：並べてよいか
+const CONSUMABLES = {
+  rush: { name: '臨時増産', glyph: '増', color: '#3f9bd8', cost: 5, short: '今日の原料 +10', desc: '今日流れてくる原料が <b>10個</b> 増える', ok: () => true },
+  shuffle: { name: '特設シャッフル', glyph: '替', color: '#8a6fd8', cost: 2, short: '特設マスを引き直す', desc: '今日の <b>★強化マス・✕故障マス</b> の場所を引き直す', ok: (R) => R.day >= 2 },
+  tuneup: { name: '緊急整備', glyph: '整', color: '#d8903f', cost: 6, short: '機械1台に ★+1', desc: '<b>改造キット</b>を1つもらう（「+」「×」の機械1台を ★改造：効果 +30%）', ok: () => true },
+  loan: { name: '前借り', glyph: '借', color: '#c9a227', cost: 0, short: 'コイン +6／次のノルマ +15%', desc: 'いますぐ <b>コイン+6</b>。代わりに <b>次の期のノルマが +15%</b>（重ねるほど増える）', ok: (R) => !R.hi && R.phase < PHASES },
+  repair: { name: '出張修理', glyph: '修', color: '#3fae8c', cost: 3, short: '今日の故障マスを直す', desc: '今日の <b>✕故障マス</b> がすべてなくなる', ok: (R) => [...R.special.values()].includes('broken') },
+  coupon: { name: '仕入れ券', glyph: '券', color: '#d86f9b', cost: 3, short: 'リロール2回無料', desc: 'ショップの <b>リロールが2回無料</b> になる（明日以降も使える）', ok: () => true },
+};
+const LOAN_COINS = 6;
+const LOAN_QMUL = 1.15;
+const RUSH_ITEMS = 10;
+// 1日の最初の入荷で、機械1枚に付くおまけ
+const SALE_RATE = 0.5; // 特価：半額（切り上げ）
+
 // 1台で働く、分かりやすい機械。まだ完走したことがない人には、最初の BASIC_DAYS 日はショップにこれだけが並ぶ
 const BASIC_DAYS = 2;
 for (const t of ['grinder', 'furnace', 'sieve', 'mason', 'twin', 'lottery', 'transmuter', 'goldsmith', 'artisan']) MACHINES[t].basic = true;
@@ -1015,13 +1587,13 @@ const LEV_MAX = 20; // Lv20 でノルマ約35億倍。上げきれない高さ�
 //   機械の3分類（加工の機械／ベルト型／補助・特殊）… 機械ごとに1本の道（スキルツリー）がある
 //       ［設計図］→ 習熟 Lv1 → Lv2 → Lv3 → Lv4 → Lv5 → ［追加効果］
 //     主ノード m_<機械>：設計図（ロック中の機械だけ。最初の1段）＋ 習熟 MASTERY_MAX 段階
-//       習熟1段階ごとに、ショップに並びやすさ +10%。「+」「×」の機械は、さらに効果 +4%（1段ぶんは小さく、5段で +20%）
+//       習熟1段階ごとに、ショップに並びやすさ +4%。「+」「×」の機械は、さらに効果 +4%（1段ぶんは小さく、5段で +20%）
 //     追加効果 x_<機械>：その機械の mod を有効にする。習熟を最後まで進めると研究できる（道のいちばん奥のごほうび）
 //   機械は1段目・2段目・3段目に分かれ、その分類で研究を進めた合計（TIER_NEED）で上の段が開く
 // どの機械をどう組むかはプレイヤーが見つけるものなので、ビルド別には並べない
 const MASTERY_MAX = 5;
 const TUNE_STEP = 0.04; // 習熟1段階ぶんの効果（「+」「×」の機械）
-const SHOP_STEP = 0.1; // 習熟1段階ぶんの、ショップへの並びやすさ
+const SHOP_STEP = 0.04; // 習熟1段階ぶんの、ショップへの並びやすさ（前は +10% で、5段で +50% と大きすぎた）
 const RESEARCH_TABS = [
   { id: 'gen', name: '経営・設備', icon: '¥' },
   { id: 'work', name: '加工の機械', icon: '炉' },
@@ -1112,7 +1684,7 @@ const TIPS = [
   '次の期のノルマは、納期を達成した画面で予告されます。上がり幅が大きいので、早めに盤面を育てましょう。',
   '完走のゴールは第6期。研究なしではまず届きません。特許をためて研究を進め、少しずつ遠くの期へ。',
   '後の期ほど、納期達成でもらえる特許が増えます。届かなかったランでも、特許はちゃんとたまります。',
-  '完走したあとは <b>ハイスコアモード</b>。ノルマなしの5日間で、どれだけ出荷できるかを競います。',
+  '完走したあとは <b>エンドレス</b>（どこまで期を続けられるか）か <b>ハイスコアモード</b>（ノルマなしの5日間で、どれだけ出荷できるか）に挑めます。',
   '4日ごとに <b>ボス日</b>。特殊ルールが付きます。ボス日に納期が重ならないよう、出荷の計画を立てましょう。',
   '★強化マスと✕故障マスは毎日場所が変わります。準備中に機械を動かして合わせましょう。',
   '改造キットは「+」「×」の機械に使えます。同じ機械に重ねがけもできます。',
@@ -1131,6 +1703,17 @@ const TIPS = [
   '日報ボーナスでもらえる機械は、所持の上限を超えていても受け取れます。',
   '熱はアイテムにたまっていくだけの数字です。それを価値に変える方法を探してみましょう。',
   'タイトル画面の「記録」から、自己ベストと最近のランを見返せます。',
+  '納期の日より前にノルマを達成すると <b>設置枠 +1</b>。納期の日ちょうどの達成はコインだけです。',
+  'レバレッジを上げると前倒し達成は難しくなります。設置枠を取りにいくか、コインと特許を取りにいくか。',
+  '手持ちには「設置枠 +4台」まで持てます。置ききれない機械は控えにして、特設マスや納期に合わせて入れ替えましょう。',
+  '<b>青天井</b>のマークが付いた機械は、組み合わせ次第で倍率がどこまでも伸びます（急冷槽・落雷塔・熟練工・金庫・換金機）。',
+  '完走したあとは <b>エンドレス</b> にも挑めます。第7期・第8期…とノルマがどんどん重くなり、どこまで続けられるかを競います。',
+  'ショップの 🔓 を押すと、その品を <b>取り置き</b> できます（リロールしても、次の日も残る）。',
+  '1日の最初の入荷では、どれか1枚が <b>特価</b> か <b>★改造済み</b> になります。',
+  '消耗品「臨時増産」は今日の原料 +10。納期の日のあと一押しに。',
+  '盤面の機械を選ぶと、そのベルトのマスで機械が発動する順番（①②③）が光の線で出ます。',
+  '機械をショップの欄へドラッグすると、その場で売却できます。',
+  'タイトルの <b>日替わりチャレンジ</b> は、その日だけの工場で全員が同じ条件。全員に同じ研究ポイントが配られ、その日だけの研究を組んで挑みます。',
 ];
 
 const ACH_CATS = [
@@ -1139,7 +1722,7 @@ const ACH_CATS = [
   { id: 'record', name: '記録' },
   { id: 'build', name: '組み合わせ' },
   { id: 'cross', name: 'かけ合わせ（追加効果）' },
-  { id: 'endless', name: '大口取引・ハイスコア' },
+  { id: 'endless', name: '大口取引・エンドレス' },
   { id: 'event', name: 'ボス・その他' },
 ];
 const ACHIEVEMENTS = [
@@ -1161,6 +1744,7 @@ const ACHIEVEMENTS = [
   { id: 'end10', cat: 'endless', tier: 3, secret: true, name: '天文学的', desc: 'ハイスコアモードで、合計 1𥝱 以上を出荷する', hint: '京・垓のさらに先' },
   { id: 'fast_win', cat: 'endless', tier: 2, name: '前倒し経営', desc: '15日以内に完走する' },
   { id: 'lev_end', cat: 'endless', tier: 2, name: '最後まで強気', desc: '第6期の納期を、レバレッジ Lv1 以上で達成する' },
+  { id: 'endless8', cat: 'endless', tier: 3, name: '終わらない残業', desc: 'エンドレスで、第8期の納期を達成する' },
   // レバレッジ
   { id: 'lev1', cat: 'lev', tier: 1, name: '強気', desc: 'レバレッジ Lv1 以上で納期を達成する' },
   { id: 'lev3', cat: 'lev', tier: 2, name: '勝負師', desc: 'レバレッジ Lv3 以上で納期を達成する' },
@@ -1247,6 +1831,7 @@ function fmt(n) {
 }
 
 function fmtMult(f) {
+  if (f >= 10000) return fmt(f);
   if (Number.isInteger(f)) return String(f);
   return (f < 10 ? f.toFixed(2) : f.toFixed(1)).replace(/0+$/, '').replace(/\.$/, '');
 }
@@ -1260,28 +1845,69 @@ function niceRound(n) {
 // ===== 納期のノルマ =====
 // 期ごとのノルマ表（レバレッジ0のとき）。その期の出荷額の「合計」で数える。
 // 実際のノルマ = この表 × レイアウト倍率 × 3^レバレッジ
-// 第1〜3期は、はじめての人が置き方を覚えれば届く。第4期は研究なしで置き方がうまい人が届く高さ。第5期からは研究が要る（研究なしで一番うまく組んだ盤面でも1日 10^12 くらい）。
-// 第6期（完走）は、研究を半分ほど進めた盤面でも届くかどうかの高さ。研究を重ねて、組み合わせも見つけてやっと届くゴール
-const PHASE_TABLE = [3000, 30000, 1e6, 1e8, 1e12, 1e19];
+// 第1〜3期は、はじめての人が置き方を覚えれば届く。第4期は研究なしで置き方がうまい人が届く高さ。第5期からは研究が要る。
+// 第6期（完走）は、研究を重ねて、組み合わせも見つけてやっと届くゴール
+// 2026-11-14：設置枠が「前倒し達成で +1」「1.8倍ずつ」で増えやすくなり、研究なしのボットでも第5期を越えたので、第4〜6期を上げた（1億→3億、1兆→100兆、1000京→10垓）
+// 同日（あとで）：所持の上限を「設置枠 +2」→「+4」にしたら、研究なしのボットの第5期が 3割 → 6割に上がったので、第5期を 100兆 → 300兆 に
+const PHASE_TABLE = [3000, 30000, 1e6, 3e8, 3e14, 1e21];
 function quotaFor(phase) {
-  return niceRound(PHASE_TABLE[Math.min(phase, PHASE_TABLE.length) - 1]);
-}// 納期を達成したときのコイン：基本 6 + 2×期、超過ボーナス（ノルマの2倍ごとに+1、最大5）、前倒しボーナス（納期まで残った1日につき EARLY_COIN）
+  const n = PHASE_TABLE.length;
+  if (phase <= n) return niceRound(PHASE_TABLE[phase - 1]);
+  // エンドレス（第7期から）：10^6、10^7、10^8 … 倍と、伸びがだんだん大きくなる
+  let pow = 0;
+  for (let p = n + 1; p <= phase; p++) pow += ENDLESS_POW + (p - n - 1);
+  return niceRound(PHASE_TABLE[n - 1] * Math.pow(10, pow));
+}
+// 納期を達成したときのコイン：基本 6 + 2×期、超過ボーナス（ノルマの2倍ごとに+1、最大5）、前倒しボーナス（納期まで残った1日につき EARLY_COIN）
 const PHASE_COIN_BASE = 6;
 const PHASE_COIN_STEP = 2;
 const EARLY_COIN = 2;
 // 特許：1日終えるごとに DAY_PATENT、納期を達成するごとに PHASE_PATENT × 期（第1期 3、第2期 6 … 第6期 18。後の期ほど多い。レバレッジは納期ぶんにだけ）
 const DAY_PATENT = 0.5;
 const PHASE_PATENT = 3;
-function pick(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
+// rnd：乱数の出どころ（省くと Math.random）。日替わりチャレンジでは日付から作った乱数を渡す
+function pick(arr, rnd = Math.random) {
+  return arr[Math.floor(rnd() * arr.length)];
 }
 
-function shuffle(arr) {
+function shuffle(arr, rnd = Math.random) {
   for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rnd() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+}
+
+// ===== 種から作る乱数（日替わりチャレンジ用） =====
+// mulberry32：32ビットの整数ひとつから、いつも同じ並びの乱数を作る
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+// 文字列 → 32ビットの整数（FNV-1a）
+function hashStr(s) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+// 日替わりチャレンジの日付（その端末の今日）。seed は YYYYMMDD の整数
+function dailyInfo(d = new Date()) {
+  const y = d.getFullYear();
+  const m = d.getMonth() + 1;
+  const dd = d.getDate();
+  const p = (n) => String(n).padStart(2, '0');
+  const seed = y * 10000 + m * 100 + dd;
+  // その日に1回だけもらえる特許（日によって 3〜6）
+  return { seed, key: String(seed), label: `${y}/${p(m)}/${p(dd)}`, bonus: 3 + (hashStr('bonus' + seed) % 4) };
 }
 
 </script>
@@ -1291,6 +1917,7 @@ const Sfx = (() => {
   let ctx = null;
   let master = null;
   let muted = false;
+  let quiet = false; // タイトルのデモ中は鳴らさない
   const last = {};
   const SCALE = [0, 2, 4, 7, 9]; // ペンタトニック。連続で上がっていくと気持ちいい
 
@@ -1319,7 +1946,7 @@ const Sfx = (() => {
   }
 
   function tone(freq, dur = 0.08, type = 'triangle', vol = 0.4, when = 0, slide = 0) {
-    if (muted || !ensure()) return;
+    if (muted || quiet || !ensure()) return;
     const t = ctx.currentTime + when;
     const o = ctx.createOscillator();
     const g = ctx.createGain();
@@ -1336,7 +1963,7 @@ const Sfx = (() => {
   }
 
   function noise(dur = 0.05, vol = 0.3, freq = 2500, when = 0) {
-    if (muted || !ensure()) return;
+    if (muted || quiet || !ensure()) return;
     const t = ctx.currentTime + when;
     const len = Math.floor(ctx.sampleRate * dur);
     const buf = ctx.createBuffer(1, len, ctx.sampleRate);
@@ -1357,7 +1984,7 @@ const Sfx = (() => {
 
   // 周波数が動くノイズ（ヒュッという音）
   function sweep(dur, vol, f0, f1, when = 0) {
-    if (muted || !ensure()) return;
+    if (muted || quiet || !ensure()) return;
     const t = ctx.currentTime + when;
     const len = Math.floor(ctx.sampleRate * dur);
     const buf = ctx.createBuffer(1, len, ctx.sampleRate);
@@ -1392,6 +2019,28 @@ const Sfx = (() => {
     },
     get muted() {
       return muted;
+    },
+    set quiet(v) {
+      quiet = !!v;
+    },
+    // ショップの入荷：カードが1枚ずつ並ぶのに合わせて、軽い音が上がっていく（n 枚）
+    restock(n = 4, gap = 0.075) {
+      for (let i = 0; i < n; i++) tone(520 * Math.pow(2, (i * 2) / 12), 0.06, i % 2 ? 'triangle' : 'square', 0.05, i * gap);
+    },
+    // 青天井の機械が大きな倍率を出した
+    sky(lv = 1) {
+      [0, 7, 12].forEach((s, i) => tone(392 * Math.pow(2, (s + lv * 2) / 12), 0.16, 'sawtooth', 0.06, i * 0.05));
+      sweep(0.25, 0.18, 600, 3200, 0.04);
+    },
+    // 消耗品を使う
+    item() {
+      tone(520, 0.08, 'triangle', 0.2, 0, 1.5);
+      tone(1040, 0.12, 'sine', 0.14, 0.06);
+    },
+    // 売却：コインが戻る
+    sell() {
+      tone(990, 0.06, 'square', 0.08);
+      tone(740, 0.1, 'square', 0.08, 0.05);
     },
     add(step) {
       if (!throttle('add', 28)) return;
@@ -2002,6 +2651,8 @@ const G = {
   flashColor: '#ffffff',
   hitstop: 0, // 大きなイベントで一瞬スローにする
   zoom: 0, // ズームパンチ
+  flat: false, // 日替わりチャレンジ中：研究をすべて Lv0 として扱う
+  demoTick: false, // タイトルのデモを進めている最中（実績・音・バナーを止める）
 };
 
 // ---------- メタ進行の保存 ----------
@@ -2014,6 +2665,7 @@ function loadMeta() {
     tut: 'todo', // チュートリアル：'todo'＝まだ / 'done'＝済み（または飛ばした）
     runs: 0, wins: 0, ach: {}, usedTypes: [], bossCleared: [],
     dev: { on: false, research: {} }, researchVer: RESEARCH_VERSION,
+    daily: {}, // 日替わりチャレンジの記録 { 'YYYYMMDD': { phases, total, days, plays, bonus } }（新しい30日ぶん）
   };
   try {
     const s = localStorage.getItem(META_KEY);
@@ -2024,6 +2676,7 @@ function loadMeta() {
         history: [...(d.history || [])], ach: { ...(d.ach || {}) }, usedTypes: [...(d.usedTypes || [])], bossCleared: [...(d.bossCleared || [])],
         dev: { on: !!(d.dev && d.dev.on), research: { ...((d.dev && d.dev.research) || {}) } },
         researchVer: d.researchVer || 1, // 古いセーブには無い → 研究のリセット対象
+        daily: { ...(d.daily || {}) },
       };
       // チュートリアルができる前のセーブ：遊んだことがあれば済みにする
       if (!d.tut) meta.tut = d.runs > 0 ? 'done' : 'todo';
@@ -2131,8 +2784,50 @@ function saveMeta() {
 function devOn() {
   return DEV_TOOLS && !!(G.meta && G.meta.dev && G.meta.dev.on);
 }
+const FLAT_RESEARCH = Object.freeze({});
 function researchStore() {
+  // 日替わりチャレンジ：その日だけの研究（全員に同じ DAILY_RP ポイントが配られ、それで組んだ研究）
+  if (G.flat) return G.meta.dailyRes ? G.meta.dailyRes.research : FLAT_RESEARCH;
   return devOn() ? G.meta.dev.research : G.meta.research;
+}
+// ---------- 日替わりチャレンジの研究 ----------
+// その日のぶんを G.meta.dailyRes = { key: 'YYYYMMDD', research } に持つ（日が変わったら作り直す。何回挑んでも同じ割り振りを使える）
+// 設計図の要る機械は最初から全部そろっていて、段もすべて開いている。使えるのは DAILY_RP ポイントだけ（特許は使わない）
+function dailyRes() {
+  const key = dailyInfo().key;
+  let d = G.meta.dailyRes;
+  if (!d || d.key !== key) {
+    d = G.meta.dailyRes = { key, research: {} };
+    for (const t of Object.keys(MACHINES)) if (MACHINES[t].locked) d.research['m_' + t] = 1;
+  }
+  return d.research;
+}
+function resetDailyRes() {
+  G.meta.dailyRes = null;
+  dailyRes();
+  saveMeta();
+}
+// 研究に使ったポイントの合計（設計図のぶんは数えない）
+function researchSpent(res) {
+  let s = 0;
+  for (const r of RESEARCH) {
+    const lv = res[r.id] || 0;
+    const from = r.kind === 'main' && MACHINES[r.machine].locked ? 1 : 0;
+    for (let l = from; l < lv; l++) s += r.cost(l);
+  }
+  return s;
+}
+// 研究に使える残り：日替わりの研究中は残りポイント、ふだんは特許
+function resPoints() {
+  if (G.flat) return DAILY_RP - researchSpent(researchStore());
+  return G.meta.patents;
+}
+// 乱数の出どころ。日替わりチャレンジでは、日付と用途（key）から決まる乱数を返すので、
+// ベルトの形・ショップ・特設マス・ボス・日報ボーナスが誰でも同じになる。ふだんは Math.random
+function rng(key) {
+  const R = G.run;
+  if (!R || !R.daily) return Math.random;
+  return mulberry32(hashStr(R.daily.seed + ':' + key));
 }
 function rlv(id) {
   return researchStore()[id] || 0;
@@ -2172,15 +2867,17 @@ function finishTutorial() {
 // ---------- レバレッジの解放 ----------
 // レバレッジは1回完走してから使える（はじめての人に見せるものを減らす）
 function levOpen() {
+  if (G.run && G.run.daily) return false; // 日替わりチャレンジは全員同じノルマ
   return devOn() || (G.meta.best.phase || 0) >= 3;
 }
 // いま研究できるもの（特許が足りて、前提もそろっている研究）の数。研究所のボタンを光らせるのに使う
 function researchAvail() {
-  if (devOn()) return 0;
+  if (devOn() && !G.flat) return 0;
+  const pts = resPoints();
   let n = 0;
   for (const r of RESEARCH) {
     const l = rlv(r.id);
-    if (l < r.max && researchOpen(r) && G.meta.patents >= r.cost(l)) n++;
+    if (l < r.max && researchOpen(r) && pts >= r.cost(l)) n++;
   }
   return n;
 }
@@ -2190,7 +2887,7 @@ function hasAch(id) {
 }
 // 実績を解除する（初めてのときだけ）。特許はその場で入る
 function unlockAch(id) {
-  if (!G.meta || hasAch(id)) return false;
+  if (!G.meta || G.demoTick || hasAch(id)) return false;
   const a = ACHIEVEMENTS.find((x) => x.id === id);
   if (!a) return false;
   G.meta.ach[id] = Date.now();
@@ -2213,6 +2910,7 @@ function tabProgress(tab) {
   return n;
 }
 function tierOpen(tab, tier) {
+  if (G.flat) return true; // 日替わりの研究は、どの段からでも選べる
   return tabProgress(tab) >= (TIER_NEED[tier] || 0);
 }
 // 研究できる状態か：段が開いていて、前提のノード（1つ前／主ノード）が Lv1 以上
@@ -2224,6 +2922,13 @@ function buyResearch(id) {
   const l = rlv(id);
   if (!r || l >= r.max || !researchOpen(r)) return false; // max は Infinity（無限研究）もある
   const cost = r.cost(l);
+  if (G.flat) {
+    // 日替わりの研究：配られたポイントで
+    if (resPoints() < cost) return false;
+    researchStore()[id] = l + 1;
+    saveMeta();
+    return true;
+  }
   if (G.meta.patents < cost) return false;
   G.meta.patents -= cost;
   G.meta.research[id] = l + 1;
@@ -2428,8 +3133,73 @@ function liveMult(m) {
   if (m.type === 'exchange') return R.coins > 0 ? 1 + R.coins / 20 : null;
   return null;
 }
+// 盤面の機械に付けるバッジ（効果がひと目でわかる短い文字）。数字で効く機械は、研究・★・隣の機械を入れた今の数字
+const BADGE_ADD = { grinder: 2, sieve: 4 };
+const BADGE_MUL = { furnace: 2, melter: 30, resonator: 3.5, cursed: 5 };
+function badgeOf(m) {
+  const d = MACHINES[m.type];
+  const R = G.run;
+  if (m.x < 0 || !R) return d.badge;
+  const k = tuneMul(m.type) * starMul(m) * ampMul(m);
+  const adj = (t) => countAdjType(m.x, m.y, t);
+  const mulTxt = (base) => '×' + fmtMult(Math.round((1 + (base - 1) * k + adj('cooler')) * 10) / 10);
+  if (m.type in BADGE_ADD) return '+' + fmtMult(Math.round(BADGE_ADD[m.type] * k * 10) / 10);
+  if (m.type in BADGE_MUL) return mulTxt(BADGE_MUL[m.type]);
+  if (m.type === 'twin') return mulTxt(adj('twin') + (modOn('twin') ? adjHotCount(m) : 0) > 0 ? 2.5 : 1.5);
+  if (m.type === 'mason') return mulTxt(2 + 2.5 * adj('sieve'));
+  if (m.type === 'goldsmith') return mulTxt(6);
+  if (m.type === 'prism') {
+    const n = new Set(adjMachineList(m.x, m.y).filter((o) => !offline(o)).map((o) => o.type)).size;
+    return n ? mulTxt(1 + (modOn('prism') ? 1.5 : 1) * n) : '×1';
+  }
+  if (m.type === 'lottery') return Math.round(Math.min(0.9, 0.15 + 0.25 * adj('cat')) * 100) + '%';
+  if (m.type === 'vault' || m.type === 'exchange') {
+    const l = liveMult(m);
+    return l ? '×' + fmtMult(Math.round(l * 10) / 10) : '金欠';
+  }
+  if (d.charge) return d.badge + chargeOf(m);
+  return d.badge;
+}
+function adjHotCount(m) {
+  let n = 0;
+  for (const o of adjMachineList(m.x, m.y)) if (!offline(o) && MACHINES[o.type].hot && o.type !== 'twin') n++;
+  return n;
+}
+// 発動順（準備中に機械を選ぶと、盤面に光のラインと①②③で出す）
+// 選んだ機械が当たるベルトのマスごとに、そのマスで発動する機械を発動する順に並べる
+// 戻り値：[{ k（ベルトの何マス目）, x, y, list: [機械...] }]（ベルトの流れの順）
+function chainAt(m) {
+  const R = G.run;
+  if (!R || m.x < 0) return [];
+  const cells = cellsOf(m);
+  const ks = new Set();
+  for (const [cx, cy] of cells) {
+    const k0 = pathIndex(cx, cy);
+    if (k0 >= 0) ks.add(k0);
+    for (const [dx, dy] of DIRS) {
+      const k = pathIndex(cx + dx, cy + dy);
+      if (k >= 0) ks.add(k);
+    }
+  }
+  const out = [];
+  for (const k of [...ks].sort((a, b) => a - b)) {
+    const [x, y] = R.path[k];
+    const list = [];
+    const bm = R.grid[idx(x, y)];
+    if (bm && MACHINES[bm.type].apply) list.push(bm);
+    const side = [];
+    for (const [dx, dy] of DIRS) {
+      const o = machineAt(x + dx, y + dy);
+      if (o && MACHINES[o.type].apply && !isBeltType(o.type) && !side.includes(o)) side.push(o);
+    }
+    side.sort((a, b) => KIND_PRIO[MACHINES[a.type].kind] - KIND_PRIO[MACHINES[b.type].kind]);
+    list.push(...side);
+    if (list.includes(m) || (bm === m)) out.push({ k, x, y, list });
+  }
+  return out;
+}
 // 研究「習熟」の段階（ロック中だった機械は Lv1 が設計図なので、そのぶんを引く）
-// 習熟1段階ごとに、「+」「×」の機械は効果 +4%、どの機械もショップに並びやすさ +10%
+// 習熟1段階ごとに、「+」「×」の機械は効果 +4%、どの機械もショップに並びやすさ +4%
 function tuneLv(type) {
   return Math.max(0, rlv('m_' + type) - (MACHINES[type].locked ? 1 : 0));
 }
@@ -2507,13 +3277,21 @@ function findMachine(uid) {
 }
 
 // ---------- ラン開始 ----------
-function newRun() {
+// opts.daily：日替わりチャレンジ（日付で決まる乱数・その日だけの研究（DAILY_RP ポイント）・レバレッジなし・第6期まで）
+function newRun(opts = {}) {
+  const daily = opts.daily ? dailyInfo() : null;
+  if (daily) dailyRes(); // その日の研究（なければ作る）
+  G.flat = !!daily;
+  G.run = null;
   // チュートリアルのランは、蛇行ライン・決まった品ぞろえで始める（案内と画面がずれないように）
-  const tut = tutPending();
-  const layout = tut ? LAYOUTS[0] : pick(LAYOUTS);
+  const tut = !daily && tutPending();
+  const layout = tut ? LAYOUTS[0] : daily ? pick(LAYOUTS, mulberry32(hashStr(daily.seed + ':layout'))) : pick(LAYOUTS);
   const path = buildPath(layout.pts);
   const R = {
     layout,
+    daily, // 日替わりチャレンジなら { seed, key, label, bonus }
+    rollN: 0, // 今日ショップを入荷した回数（日替わりの乱数の番号）
+    loan: 0, // 消耗品「前借り」を使った回数（次の期のノルマが増える）
     path,
     belt: new Set(path.map(([x, y]) => idx(x, y))),
     pathIdx: new Map(path.map(([x, y], i) => [idx(x, y), i])),
@@ -2547,7 +3325,7 @@ function newRun() {
     bestUnit: 0, // このランで到達した最大の単位（万=1, 億=2...）
     // days: 終えた日数 / phasesCleared: 達成した期の数 / patentPts: 特許のもと（1日ごと＋納期達成ごと）
     // levSum: 達成した期のレバレッジの合計 / levMin: いちばん低かった期
-    stats: { days: 0, phasesCleared: 0, bestItem: 0, totalShipped: 0, bonusPatents: 0, patentPts: 0, levSum: 0, levMin: 99, levMax: 0, bestDay: 0, bestRatio: 0 },
+    stats: { days: 0, phasesCleared: 0, bestItem: 0, totalShipped: 0, bonusPatents: 0, patentPts: 0, levSum: 0, levMin: 99, levMax: 0, bestDay: 0, bestRatio: 0, earlySlots: 0 },
     prevBest: { ...G.meta.best }, // ラン開始時の自己ベスト（終了画面の「新記録」用）
   };
   G.run = R;
@@ -2561,10 +3339,91 @@ function newRun() {
   G.rings = [];
   startPhase();
   prepareDay();
-  rollShop();
-  if (tut) R.shop = ['grinder', 'furnace', 'sieve', 'mason'].map((type) => ({ type, sold: false }));
+  rollShop(true);
+  if (tut) R.shop = ['grinder', 'furnace', 'sieve', 'mason'].map(shopMachine);
   G.state = 'build';
   G.dirty = true;
+}
+
+// ---------- タイトル画面のデモ ----------
+// タイトルの後ろで、見本の工場を動かし続ける。本物のランではないので、記録・実績・音・コインには何も残さない
+const DEMO_BOARD = [
+  ['grinder', 1, 0], ['sieve', 3, 2], ['burner', 5, 1], ['furnace', 6, 2], ['twin', 8, 2], ['twin', 9, 2],
+  ['transmuter', 9, 3], ['transmuter', 5, 3], ['goldsmith', 4, 4], ['quench', 3, 5], ['artisan', 6, 6], ['splitter', 8, 5], ['resonator', 10, 6],
+];
+function startDemo() {
+  G.flat = false;
+  const layout = LAYOUTS[0];
+  const path = buildPath(layout.pts);
+  const R = {
+    demo: true, layout, path,
+    belt: new Set(path.map(([x, y]) => idx(x, y))),
+    pathIdx: new Map(path.map(([x, y], i) => [idx(x, y), i])),
+    tut: null, daily: null, lev: 0, day: 1, phase: 1, phaseScore: 0, coins: 0, special: new Map(), kits: 0, freeRerolls: 0,
+    boardCap: 99, bench: 0, slotBuys: 0, shopSize: 0, shopBonusToday: 0, shopBonusNext: 0, itemsPerDay: 1e9, interestCap: 0,
+    speed: 2.6, curSpeed: 2.6, grid: new Array(COLS * ROWS).fill(null), tray: [], shop: [], rerollCost: 0, sel: null,
+    victory: false, bestUnit: 99, quota: Infinity, quotaBase: Infinity, deadline: 99, phaseStartDay: 1, rollN: 0, loan: 0,
+    stats: { days: 0, phasesCleared: 0, bestItem: 0, totalShipped: 0, bonusPatents: 0, patentPts: 0, levSum: 0, levMin: 99, levMax: 0, bestDay: 0, bestRatio: 0, earlySlots: 0 },
+    prevBest: {},
+  };
+  G.run = R;
+  G.items = [];
+  G.texts = [];
+  G.particles = [];
+  G.beams = [];
+  G.rings = [];
+  for (const [type, x, y] of DEMO_BOARD) {
+    if (!MACHINES[type] || !inBounds(x, y) || machineAt(x, y) || !canPlaceType(type, x, y)) continue;
+    gridPut(makeMachine(type), x, y);
+  }
+  R.boss = null;
+  R.dayScore = 0;
+  R.shippedCount = 0;
+  R.quotaHit = false;
+  R.fever = false;
+  R.overLevel = 0;
+  R.combo = 0;
+  R.lastShipT = -9;
+  R.t = 0;
+  R.spawned = 0;
+  R.spawnTimer = 0;
+  R.dayDone = false;
+  R.endTimer = 0;
+  R.itemsToday = 1e9;
+  R.dayStats = { best: 0, dup: 0, split: 0, destroyed: 0, coins: 0, maxCombo: 0, jackpots: 0, spent: 0 };
+  G.dispScore = 0;
+  G.dirty = true;
+}
+// デモを1コマ進める（update から、タイトル画面のあいだだけ呼ぶ）
+function demoStep(dt) {
+  const R = G.run;
+  G.demoTick = true;
+  Sfx.quiet = true;
+  try {
+    // 流れ続けるように、ゆっくり原料を出す。たまりすぎたら出すのを休む
+    R.spawnTimer -= dt;
+    if (R.spawnTimer <= 0) {
+      if (G.items.length < 40) spawnItem();
+      R.spawnTimer += 0.9;
+    }
+    const end = R.path.length - 1;
+    for (let i = 0; i < G.items.length; i++) {
+      const it = G.items[i];
+      if (!it.alive) continue;
+      it.p += R.curSpeed * dt;
+      while (it.alive && it.last < end && Math.floor(it.p) > it.last) {
+        it.last++;
+        processTile(it, it.last, null, G.items);
+      }
+      if (it.alive && it.last >= end) shipItem(it);
+    }
+    G.items = G.items.filter((i) => i.alive);
+    R.t += dt;
+    R.coins = 0;
+  } finally {
+    G.demoTick = false;
+    Sfx.quiet = false;
+  }
 }
 
 function baseRerollCost() {
@@ -2572,10 +3431,13 @@ function baseRerollCost() {
 }
 // 持っている機械と相性のいい機械は ×4 出やすい（相方が見つかりやすいように。画面には出さない）
 const SYNERGY_WEIGHT = 4;
-function weightedPick(pool) {
-  const w = (t) => RARITY[MACHINES[t].rarity].w * (synergyWith(t) ? SYNERGY_WEIGHT : 1) * shopBoost(t);
+// 日替わりチャレンジでは、持っている機械で品ぞろえが変わらないように、レア度の重みだけで選ぶ
+function weightedPick(pool, rnd = Math.random) {
+  const plain = !!(G.run && G.run.daily);
+  // 日替わりチャレンジは「相性」で並びやすくしない（持ち物で品ぞろえが変わらないように）。研究の習熟ぶんは効く
+  const w = (t) => RARITY[MACHINES[t].rarity].w * (plain ? 1 : synergyWith(t) ? SYNERGY_WEIGHT : 1) * shopBoost(t);
   const total = pool.reduce((s, t) => s + w(t), 0);
-  let r = Math.random() * total;
+  let r = rnd() * total;
   for (const t of pool) {
     r -= w(t);
     if (r <= 0) return t;
@@ -2583,22 +3445,75 @@ function weightedPick(pool) {
   return pool[pool.length - 1];
 }
 // ショップに並ぶ機械。まだ完走したことがない人には、最初の2日は1台で働く分かりやすい機械だけを並べる（はじめての人向け）
+// 日替わりチャレンジでは、設計図の要る機械も含めて全部の機械が並ぶ（研究の進み具合で差が出ないように）
+function machinePool() {
+  return G.run && G.run.daily ? Object.keys(MACHINES) : Object.keys(MACHINES).filter(isUnlocked);
+}
 function shopPool() {
   const R = G.run;
-  const pool = Object.keys(MACHINES).filter(isUnlocked);
-  return (G.meta.best.phase || 0) < 3 && !devOn() && R.day <= BASIC_DAYS ? pool.filter((t) => MACHINES[t].basic) : pool;
+  const pool = machinePool();
+  // 日替わりチャレンジは、1日目だけ基本の機械（はじめの盤面を作りやすく）
+  const basic = R.daily ? R.day <= 1 : (G.meta.best.phase || 0) < 3 && !devOn() && R.day <= BASIC_DAYS;
+  return basic ? pool.filter((t) => MACHINES[t].basic) : pool;
 }
-function rollShop() {
+// ショップの1枠。機械：{ type, sold, price, sale?（特価）, star?（改造済み）, lock? } ／ 消耗品：{ item, sold, price, lock? }
+function shopMachine(type) {
+  return { type, sold: false, price: MACHINES[type].cost };
+}
+// first：その日の最初の入荷（機械1枚に「特価」か「★改造済み」のおまけが付く）
+// ロックした枠（1つまで）は、リロールしても日が変わっても、売れるまで同じ場所に残る
+function rollShop(first) {
   const R = G.run;
+  const rnd = rng('shop:' + R.day + ':' + R.rollN);
+  R.rollN++;
   const pool = shopPool();
+  const old = R.shop || [];
+  const lockI = old.findIndex((s) => s.lock && !s.sold);
+  const locked = lockI >= 0 ? old[lockI] : null;
   const used = new Set();
-  R.shop = [];
+  const machines = [];
   for (let i = 0; i < R.shopSize + R.shopBonusToday; i++) {
-    let t = weightedPick(pool);
-    for (let k = 0; k < 12 && used.has(t); k++) t = weightedPick(pool);
+    let t = weightedPick(pool, rnd);
+    for (let k = 0; k < 12 && used.has(t); k++) t = weightedPick(pool, rnd);
     used.add(t);
-    R.shop.push({ type: t, sold: false });
+    machines.push(shopMachine(t));
   }
+  // おまけ（乱数は先に全部引いておく。日替わりチャレンジで、持ち物によって引く回数が変わらないように）
+  const bonusAt = Math.floor(rnd() * Math.max(1, machines.length));
+  const bonusStar = rnd() < 0.5;
+  const twoItems = rnd() < 0.35;
+  if (first && machines.length && !R.tut) {
+    const s = machines[bonusAt];
+    if (bonusStar && canStar(s)) s.star = 1;
+    else {
+      s.sale = true;
+      s.price = Math.max(1, Math.ceil(s.price * SALE_RATE));
+    }
+  }
+  // 消耗品：2日目から1〜2枠
+  const items = [];
+  if (R.day >= 2 && !R.tut) {
+    const ids = shuffle(Object.keys(CONSUMABLES), rnd).filter((id) => CONSUMABLES[id].ok(R));
+    for (const id of ids.slice(0, twoItems ? 2 : 1)) items.push({ item: id, sold: false, price: CONSUMABLES[id].cost });
+  }
+  if (locked) {
+    if (locked.item) items[0] = locked;
+    else if (machines.length) machines[Math.min(lockI, machines.length - 1)] = locked;
+    else machines.push(locked);
+  }
+  R.shop = [...machines, ...items];
+  R.shopStamp = (R.shopStamp || 0) + 1; // 入荷のたびに増える（カードが左から順に出る演出のきっかけ）
+}
+// ショップの枠をロックする（1つまで。もう一度押すと外れる）
+function toggleLock(i) {
+  const R = G.run;
+  const s = R.shop[i];
+  if (!s || s.sold) return false;
+  const on = !s.lock;
+  for (const o of R.shop) o.lock = false;
+  s.lock = on;
+  G.dirty = true;
+  return true;
 }
 
 // その期の、レバレッジ0のときのノルマ
@@ -2622,7 +3537,10 @@ function startPhase() {
   R.phaseStartDay = R.day;
   R.deadline = deadlineFrom(R.day);
   R.phaseFresh = true;
-  R.quotaBase = runQuotaBase(R.phase);
+  // 消耗品「前借り」：使った回数ぶん、この期のノルマが重くなる（1回 +15%）
+  R.quotaBase = runQuotaBase(R.phase) * Math.pow(LOAN_QMUL, R.loan || 0);
+  R.loanUsed = R.loan || 0; // この期のノルマに入った前借りの回数（画面に出す）
+  R.loan = 0;
   R.quota = niceRound(R.quotaBase * Math.pow(LEV_QMUL, R.lev || 0));
 }
 // レバレッジ：期の最初の日の準備中に決める。1Lvごとに その期のノルマ×3、納期達成のコイン+50%・特許+50%
@@ -2646,6 +3564,9 @@ function rollSpecial() {
   const R = G.run;
   R.special = new Map();
   if (R.day < 2) return;
+  // 日替わりチャレンジ：故障マスは「置いてある機械を狙う」ので人によって変わるが、候補の引き方は同じ乱数から
+  R.specialN = (R.specialN || 0) + 1;
+  const rnd = rng('special:' + R.day + ':' + R.specialN);
   const cells = [];
   for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (cellKind(x, y) === 'side' && beltHits(x, y) >= 1) cells.push([x, y]);
   const strong = cells.filter(([x, y]) => beltHits(x, y) >= 2);
@@ -2654,15 +3575,19 @@ function rollSpecial() {
   for (let i = 0; i < nBroken; i++) {
     const left = strong.filter(([x, y]) => !R.special.has(idx(x, y)));
     const occupied = left.filter(([x, y]) => machineAt(x, y));
-    const broken = occupied.length && Math.random() < 0.6 ? pick(occupied) : left.length ? pick(left) : null;
+    // 日替わりチャレンジでは、盤面に関係なく決める（誰でも同じ場所が故障する）
+    const aim = !R.daily && occupied.length && rnd() < 0.6;
+    const broken = aim ? pick(occupied, rnd) : left.length ? pick(left, rnd) : null;
     if (broken) R.special.set(idx(broken[0], broken[1]), 'broken');
   }
-  const free = shuffle(cells.filter(([x, y]) => !R.special.has(idx(x, y))));
+  const free = shuffle(cells.filter(([x, y]) => !R.special.has(idx(x, y))), rnd);
   for (let i = 0; i < 1 + rlv('hotspot') && i < free.length; i++) R.special.set(idx(free[i][0], free[i][1]), 'boost');
 }
 function prepareDay() {
   const R = G.run;
-  R.boss = R.day % 4 === 0 ? pick(BOSS_RULES) : null;
+  R.boss = R.day % 4 === 0 ? pick(BOSS_RULES, rng('boss:' + R.day)) : null;
+  R.rollN = 0;
+  R.specialN = 0;
   // 日報ボーナス「納期のノルマ -20%」
   if (R.quotaCut) {
     R.quotaBase *= 0.8;
@@ -2691,22 +3616,55 @@ function prepareDay() {
 }
 
 // ---------- 準備フェーズの操作 ----------
+// （前は「手持ちがいっぱいのとき同じ機械を買うと合体して ★+1」があったが、分かりにくいのでなくした）
+// ショップの値段（特価なら半額）
+function shopPrice(s) {
+  return s.price != null ? s.price : s.item ? CONSUMABLES[s.item].cost : MACHINES[s.type].cost;
+}
+// 戻り値: 'ok' | 'cap'（持てる台数がいっぱい）| 'coins' | 'none' | 'used'（消耗品）
 function buyShop(i) {
   const R = G.run;
   const s = R.shop[i];
   if (!s || s.sold) return 'none';
-  const cost = MACHINES[s.type].cost;
+  const cost = shopPrice(s);
+  if (s.item) {
+    if (R.coins < cost) return 'coins';
+    if (!CONSUMABLES[s.item].ok(R)) return 'none';
+    R.coins -= cost;
+    s.sold = true;
+    s.lock = false;
+    useConsumable(s.item);
+    G.dirty = true;
+    return 'used';
+  }
   if (ownedCount() >= ownedCap()) return 'cap';
   if (R.coins < cost) return 'coins';
   R.coins -= cost;
   s.sold = true;
+  s.lock = false;
   const m = makeMachine(s.type);
+  if (s.star) m.star = s.star;
   R.tray.push(m);
   R.sel = m.uid;
   G.dirty = true;
   return 'ok';
 }
-// 設置枠を1つ増やす（値段は2.5倍ずつ）
+// 消耗品を使う（買ったその場で効く）
+function useConsumable(id) {
+  const R = G.run;
+  switch (id) {
+    case 'rush': R.itemsToday += RUSH_ITEMS; break;
+    case 'shuffle': rollSpecial(); break;
+    case 'tuneup': R.kits++; break;
+    case 'loan': R.coins += LOAN_COINS; R.loan = (R.loan || 0) + 1; break;
+    case 'repair':
+      for (const [k, v] of [...R.special]) if (v === 'broken') R.special.delete(k);
+      break;
+    case 'coupon': R.freeRerolls += 2; break;
+  }
+  R.usedItems = (R.usedItems || 0) + 1;
+}
+// 設置枠を1つ増やす（値段は1.8倍ずつ）
 function buySlot() {
   const R = G.run;
   const cost = runSlotCost();
@@ -2812,11 +3770,16 @@ function rotateMachine(uid) {
 }
 function sellSelected() {
   const R = G.run;
-  const f = R.sel != null && findMachine(R.sel);
+  return R.sel != null && sellMachine(R.sel);
+}
+// 機械を売る（ショップの欄へドラッグしたときも）
+function sellMachine(uid) {
+  const R = G.run;
+  const f = findMachine(uid);
   if (!f) return false;
   removeFromWhere(f);
   R.coins += sellValue(f.m);
-  R.sel = null;
+  if (R.sel === uid) R.sel = null;
   G.dirty = true;
   return true;
 }
@@ -3095,6 +4058,12 @@ function makeCtx(m, item, dry, pool, born) {
         G.shake = Math.max(G.shake, 7);
         flashScreen(0.35, '#ffd447');
         G.hitstop = Math.max(G.hitstop, 0.08);
+      } else if (MACHINES[m.type].sky && f >= 2) {
+        // 青天井の機械：倍率を大きな札で出す（桁が大きいほど札も大きく、長く残る）
+        fx('#ffe27a', true);
+        skyText(pos.x, pos.y - 26, `${MACHINES[m.type].name} ×${fmtMult(f)}`, f);
+        Sfx.mult(item.steps);
+        burst(pos.x, pos.y, '#ffe27a', 10 + Math.min(20, Math.log10(f) * 6));
       } else {
         fx('#ff8a5c', f >= 4);
         addText(pos.x, pos.y - 16, '×' + fmtMult(f), '#ff8a5c', 15 + Math.min(10, f * 1.3), f >= 3);
@@ -3219,7 +4188,7 @@ function makeCtx(m, item, dry, pool, born) {
         if (f >= 1000) unlockAch('quench1000');
         if (item.zapHeat) unlockAch('x_zap_heat');
         if (item.lotHeat) unlockAch('x_lot_heat');
-        addText(pos.x, pos.y - 34, `急冷！ 熱${h}`, '#9fd8ff', 16, true);
+        addText(pos.x, pos.y - 56, `急冷！ 熱${h}`, '#9fd8ff', 13, true);
         burst(pos.x, pos.y, '#e8f6ff', 10 + Math.min(30, h * 2));
         addRing(pos.x, pos.y, '#9fd8ff', 1 + Math.min(1.5, h / 8));
         Sfx.whoosh();
@@ -3334,6 +4303,7 @@ function makeCtx(m, item, dry, pool, born) {
       for (const o of targets) {
         o.zap = (o.zap || 0) + 1;
         o.value *= 1 + k / o.zap;
+        o.zapMul = (o.zapMul || 1) * (1 + k / o.zap); // 雷の合計の倍率（青天井の札に出す）
         if (heat && !o.heat) {
           o.heat = heat;
           o.zapHeat = true; // 実績「雷で沸かす」用
@@ -3346,10 +4316,13 @@ function makeCtx(m, item, dry, pool, born) {
       if (targets.some((o) => o.zap >= 12)) unlockAch('zap12');
       let bolts = 0;
       let shown = 0;
+      // 雷を多く浴びたアイテム（合計の倍率が大きい）3個は、青天井の札で「雷 合計×◯」を出す
+      const top = new Set([...targets].sort((a, b) => b.zapMul - a.zapMul).slice(0, 3).filter((o) => o.zapMul >= 10));
       for (const o of targets) {
         const op = itemPos(o);
         if (bolts++ < 14) addBolt(mx, my, op.x, op.y);
-        if (shown++ < 40) addText(op.x, op.y - 16, '×' + fmtMult(Math.round((1 + k / o.zap) * 100) / 100), '#fff27a', 14, true);
+        if (top.has(o)) skyText(op.x, op.y - 24, `雷 合計×${fmtMult(Math.round(o.zapMul * 10) / 10)}`, o.zapMul);
+        else if (shown++ < 30) addText(op.x, op.y - 16, '×' + fmtMult(Math.round((1 + k / o.zap) * 100) / 100), '#fff27a', 14, true);
         o.pop = 1.4;
         checkUnit(o, op);
       }
@@ -3479,11 +4452,13 @@ function endDay() {
   const cleared = R.phaseScore >= R.quota;
   const daysLeft = R.deadline - R.day; // 納期まで残り何日あるか（今日は入れない）
   if (!cleared && daysLeft <= 0) {
+    R.stats.days = R.day;
     G.state = 'over';
-    UI.banner('納期に間に合わず…', 'bad');
+    // エンドレスは「どこまで行けたか」を競うので、届かなかったら解雇ではなく、そこで終わり
+    UI.banner(R.endless ? `エンドレス 第${R.phase}期で終了` : '納期に間に合わず…', 'bad');
     Sfx.fail();
     G.dirty = true;
-    setTimeout(() => endRun('fail'), 1300);
+    setTimeout(() => endRun(R.endless ? 'endless' : 'fail'), 1300);
     return;
   }
   const lev = R.lev || 0;
@@ -3504,7 +4479,13 @@ function endDay() {
     const early = EARLY_COIN * daysLeft;
     const levBonus = Math.round((bonus + over) * (levCoinMul(lev) - 1));
     const pts = PHASE_PATENT * R.phase * levPatentMul(lev);
-    clear = { phase: R.phase, ratio, over, bonus, early, daysLeft, levBonus, pts, oneDay: R.day === R.phaseStartDay };
+    // 前倒し達成（納期の日より前に達成）：設置枠 +1 が確定でもらえる。納期の日ちょうどの達成はコインだけ
+    const slot = daysLeft >= 1;
+    if (slot) {
+      R.boardCap++;
+      R.stats.earlySlots++;
+    }
+    clear = { phase: R.phase, ratio, over, bonus, early, daysLeft, levBonus, pts, slot, oneDay: R.day === R.phaseStartDay };
     R.coins += bonus + over + early + levBonus;
     R.stats.patentPts += pts;
     R.stats.levSum += lev;
@@ -3514,7 +4495,9 @@ function endDay() {
     R.stats.bestRatio = Math.max(R.stats.bestRatio, ratio);
   }
   R.coins += base + interest + piggy + cashback;
-  R.lastReward = { base, interest, piggy, cashback, lev, dayPts, clear, daysLeft, need: Math.max(0, R.quota - R.phaseScore) };
+  // この日の終わりにもらったコインの合計（結果画面で大きく出す）。稼働中に機械から入ったぶんは別に数える
+  const coinTotal = base + interest + piggy + cashback + (clear ? clear.bonus + clear.over + clear.early + clear.levBonus : 0);
+  R.lastReward = { base, interest, piggy, cashback, lev, dayPts, clear, daysLeft, need: Math.max(0, R.quota - R.phaseScore), coinTotal, runCoins: Math.max(0, R.dayStats.coins || 0) };
   R.stats.days = R.day;
   R.stats.bestDay = Math.max(R.stats.bestDay, R.dayScore);
   R.lastReward.records = recordDay(R, clear);
@@ -3525,6 +4508,12 @@ function endDay() {
   const firstWin = cleared && R.phase === PHASES && !R.victory;
   if (firstWin) R.victory = true;
   UI.showResult(firstWin);
+}
+
+// ---------- エンドレス（完走のあと） ----------
+// 第7期・第8期…と期を続ける。ノルマは quotaFor が決める（1期ごとに桁の伸びが大きくなる）。納期に届かなければそこで終わり
+function startEndless() {
+  G.run.endless = true;
 }
 
 // ---------- ハイスコアモード（完走のあと） ----------
@@ -3565,7 +4554,7 @@ function endHiDay() {
     bumpBest('hiscore', R.phaseScore);
     checkHiAchievements(R.phaseScore);
   }
-  R.lastReward = { base, interest, piggy, cashback, lev: 0, dayPts, clear: null, daysLeft, need: 0, hi: true };
+  R.lastReward = { base, interest, piggy, cashback, lev: 0, dayPts, clear: null, daysLeft, need: 0, hi: true, coinTotal: base + interest + piggy + cashback, runCoins: Math.max(0, R.dayStats.coins || 0) };
   R.stats.days = R.day;
   R.stats.bestDay = Math.max(R.stats.bestDay, R.dayScore);
   R.lastReward.records = recordDay(R, null);
@@ -3602,7 +4591,8 @@ function checkDayAchievements(clear, coinsAtEnd) {
     }
     if (clear.phase >= 4) unlockAch('end4');
     if (clear.phase >= 5) unlockAch('end6');
-    if (clear.phase >= 4 && !Object.values(researchStore()).some((v) => v > 0)) unlockAch('win_nores');
+    if (R.endless && clear.phase >= 8) unlockAch('endless8');
+    if (clear.phase >= 4 && !R.daily && !Object.values(researchStore()).some((v) => v > 0)) unlockAch('win_nores');
     if (clear.oneDay) unlockAch('early1');
     // レバレッジ
     if (lev >= 1) unlockAch('lev1');
@@ -3661,7 +4651,7 @@ const REWARD_TYPES = [
   { id: 'coins', w: 3, ok: () => true },
   { id: 'machine', w: 3, ok: () => true },
   { id: 'kit', w: 3, ok: () => placedCount() + G.run.tray.length > 0 },
-  { id: 'slot', w: 1, ok: (R) => R.day >= 3 },
+  // 「設置枠 +1」は抽選からなくした（前倒し達成の確定ボーナスに移した）
   { id: 'patent', w: 1.5, ok: () => true },
   { id: 'quota', w: 1.5, ok: (R) => !R.hi },
   { id: 'shop', w: 2, ok: () => true },
@@ -3672,9 +4662,10 @@ function rollRewards(big) {
   const n = 3 + rlv('reward');
   const pool = REWARD_TYPES.filter((t) => t.ok(R));
   const out = [];
+  const rnd = rng('reward:' + R.day);
   while (out.length < n && pool.length) {
     const total = pool.reduce((s, t) => s + t.w, 0);
-    let r = Math.random() * total;
+    let r = rnd() * total;
     let i = 0;
     for (; i < pool.length - 1; i++) {
       r -= pool[i].w;
@@ -3690,9 +4681,9 @@ function rollRewards(big) {
     if (t.id === 'reroll') rw.n = big ? 5 : 3;
     if (t.id === 'machine') {
       // 相性のいい機械が出やすい。納期を達成した日は、レアの機械（なければアンコモン以上）
-      const pool2 = Object.keys(MACHINES).filter((k) => isUnlocked(k) && MACHINES[k].rarity >= 2);
+      const pool2 = machinePool().filter((k) => MACHINES[k].rarity >= 2);
       const rare = pool2.filter((k) => MACHINES[k].rarity >= 3);
-      rw.type = weightedPick(big && rare.length ? rare : pool2);
+      rw.type = weightedPick(big && rare.length ? rare : pool2, rnd);
     }
     out.push(rw);
   }
@@ -3703,7 +4694,6 @@ function rewardText(rw) {
     case 'coins': return { t: `コイン +${rw.n}枚`, d: 'すぐにもらえる' };
     case 'machine': return { t: `「${MACHINES[rw.type].name}」をもらう`, d: MACHINES[rw.type].desc };
     case 'kit': return { t: `改造キット${rw.n > 1 ? ' ×' + rw.n : ''}`, d: '「+」「×」の機械1台を <b>★改造</b>：効果 <b>+30%</b>（重ねがけできる）。準備画面で使う' };
-    case 'slot': return { t: '設置枠 +1', d: '工事費なしで盤面の枠が1つ増える' };
     case 'patent': return { t: `特許 +${rw.n}`, d: 'ランの終わりに受け取る' };
     case 'quota': return { t: '納期のノルマ -20%', d: rw.big ? '次の期のノルマが軽くなる' : 'いまの期のノルマが軽くなる' };
     case 'shop': return { t: `明日のショップ +${rw.n}品`, d: 'リロールしても品数はそのまま' };
@@ -3719,7 +4709,6 @@ function chooseReward(i) {
     case 'coins': R.coins += rw.n; break;
     case 'machine': R.tray.push(makeMachine(rw.type)); break;
     case 'kit': R.kits += rw.n; break;
-    case 'slot': R.boardCap++; break;
     case 'patent': R.stats.bonusPatents += rw.n; break;
     case 'quota': R.quotaCut = true; break;
     case 'shop': R.shopBonusNext += rw.n; break;
@@ -3755,7 +4744,7 @@ function nextDay() {
   R.shopBonusNext = 0;
   R.rewards = null;
   prepareDay();
-  rollShop();
+  rollShop(true);
   G.items = [];
   G.state = 'build';
   G.dirty = true;
@@ -3766,7 +4755,8 @@ function nextDay() {
 const HISTORY_MAX = 30;
 function bumpBest(key, v) {
   const b = G.meta.best;
-  if (devOn() || !(v > (b[key] || 0))) return false;
+  // 日替わりチャレンジは条件が違う（研究なし・全部の機械が並ぶ）ので、ふだんの自己ベストには数えない
+  if (devOn() || (G.run && G.run.daily) || !(v > (b[key] || 0))) return false;
   b[key] = v;
   return true;
 }
@@ -3802,12 +4792,12 @@ function recordRun(R, gained, reason) {
   if (R.hi && R.hi.done) bumpBest('hiscore', R.hi.total || 0);
   const pb = R.prevBest || {};
   const now = [['hiscore', R.hi && R.hi.done ? R.hi.total || 0 : 0], ['phase', R.stats.phasesCleared], ['item', R.stats.bestItem], ['dayScore', R.stats.bestDay], ['ratio', R.stats.bestRatio], ['lev', R.stats.levMax || 0], ['total', R.stats.totalShipped], ['patents', gained]];
-  R.newRecords = devOn() ? [] : now.filter(([k, v]) => (pb[k] || 0) > 0 && v > pb[k]).map(([k]) => k);
+  R.newRecords = devOn() || R.daily ? [] : now.filter(([k, v]) => (pb[k] || 0) > 0 && v > pb[k]).map(([k]) => k);
   const board = placedMachines().map((m) => m.type);
   G.meta.history.unshift({
-    t: Date.now(), days: R.stats.days, phases: R.stats.phasesCleared, win: !!R.victory, reason, layout: R.layout.name, hi: R.hi && R.hi.done ? R.hi.total || 0 : null,
+    t: Date.now(), days: R.stats.days, phases: R.stats.phasesCleared, win: !!R.victory, reason, layout: R.layout.name, hi: R.hi && R.hi.done ? R.hi.total || 0 : null, endless: R.endless ? 1 : undefined,
     item: R.stats.bestItem, day: R.stats.bestDay, total: R.stats.totalShipped, lev: R.stats.levMax || 0,
-    patents: gained, board, dev: devOn(),
+    patents: gained, board, dev: devOn(), daily: R.daily ? R.daily.label : undefined,
   });
   G.meta.history.length = Math.min(G.meta.history.length, HISTORY_MAX);
 }
@@ -3816,17 +4806,47 @@ function recordRun(R, gained, reason) {
 function patentsFor(R) {
   return Math.round(R.stats.patentPts) + (R.victory ? 5 : 0) + R.stats.bonusPatents;
 }
+// 日替わりチャレンジの記録（その日のベスト：達成した期 → 出荷の合計の順で比べる）
+// その日はじめて最後まで遊んだときだけ、日替わりの特許（日によって 3〜6）がもらえる。戻り値はその特許
+const DAILY_KEEP = 30;
+function dailyScore(phases, total) {
+  return phases * 1e3 + Math.log10(Math.max(1, total));
+}
+function recordDaily(R) {
+  const all = G.meta.daily || (G.meta.daily = {});
+  const k = R.daily.key;
+  const rec = all[k] || { plays: 0, phases: 0, total: 0, days: 0, item: 0, got: 0 };
+  const phases = R.stats.phasesCleared;
+  const total = R.stats.totalShipped;
+  rec.plays++;
+  R.daily.prev = rec.plays > 1 ? { phases: rec.phases, total: rec.total } : null;
+  R.daily.newBest = rec.plays === 1 || dailyScore(phases, total) > dailyScore(rec.phases, rec.total);
+  if (R.daily.newBest) Object.assign(rec, { phases, total, days: R.stats.days, item: R.stats.bestItem, win: !!R.victory });
+  let bonus = 0;
+  if (!rec.got && !devOn()) {
+    bonus = R.daily.bonus;
+    rec.got = bonus;
+  }
+  R.daily.gotBonus = bonus;
+  all[k] = rec;
+  // 古い日の記録は消す（新しい DAILY_KEEP 日ぶん）
+  const keys = Object.keys(all).sort();
+  while (keys.length > DAILY_KEEP) delete all[keys.shift()];
+  return bonus;
+}
 // reason: 'fail' | 'retire' | 'quit'
 function endRun(reason) {
   const R = G.run;
   if (!R || R.ended) return;
   R.ended = true;
-  const gained = patentsFor(R);
+  let gained = patentsFor(R);
+  if (R.daily) gained += recordDaily(R);
   finishTutorial(); // 途中で終わっても、チュートリアルは済みにする（タイトルからもう一度見られる）
   G.meta.patents += gained;
   G.meta.runs++;
-  if (R.victory) G.meta.wins = (G.meta.wins || 0) + 1;
+  if (R.victory && !R.daily) G.meta.wins = (G.meta.wins || 0) + 1;
   recordRun(R, gained, reason);
+  G.flat = false; // ここから先（研究所など）は、ふだんの研究で見る
   saveMeta();
   G.state = 'over';
   G.dirty = true;
@@ -3887,6 +4907,19 @@ function estimateDay() {
 function addText(x, y, s, color, size = 14, bold = false) {
   G.texts.push({ x: x + (Math.random() - 0.5) * 8, y, s, color, size, bold, life: 0, max: 0.9, vy: -55 });
   if (G.texts.length > 260) G.texts.splice(0, G.texts.length - 260);
+}
+// 青天井の機械の倍率：金色の縁の札にして、ほかの数字より大きく・長く出す。f が大きいほど札が大きい
+// 同じ場所に重なりすぎないよう、札は同時に SKY_MAX 枚まで（古いものから消す）
+const SKY_MAX = 10;
+function skyText(x, y, s, f) {
+  const lv = Math.min(4, Math.floor(Math.log10(Math.max(1, f)))); // 0:×2〜9 1:×10〜 2:×100〜 3:×1000〜 4:×1万〜
+  const sky = G.texts.filter((t) => t.sky);
+  if (sky.length >= SKY_MAX) G.texts.splice(G.texts.indexOf(sky[0]), 1);
+  G.texts.push({ x, y, s, color: ['#ffe27a', '#ffd447', '#ffb347', '#ff8ad8', '#7fd6ff'][lv], size: 21 + lv * 4, bold: true, life: 0, max: 1.4 + lv * 0.2, vy: -30, sky: true, lv });
+  if (lv >= 2) {
+    addRing(x, y + 20, '#ffd447', 1.2 + lv * 0.3);
+    if (Sfx.sky) Sfx.sky(lv);
+  }
 }
 function burst(x, y, color, n) {
   for (let i = 0; i < n; i++) {
@@ -3991,6 +5024,15 @@ function update(realDt) {
     }
   } else {
     G.hitstop = 0;
+    // タイトル画面の後ろで、見本の工場を動かす
+    if (G.state === 'title' && G.run && G.run.demo) {
+      let simDt = Math.min(0.1, realDt);
+      while (simDt > 0) {
+        const step = Math.min(1 / 60, simDt);
+        demoStep(step);
+        simDt -= step;
+      }
+    }
   }
   updateEffects(realDt);
 }
@@ -4023,10 +5065,10 @@ const Render = (() => {
   function resize() {
     const wrap = cv.parentElement;
     const r = wrap.getBoundingClientRect();
-    // 盤面の下に右の欄が来る並び（style.css の縦並びのとき）か
-    const narrow = getComputedStyle(wrap.parentElement).flexDirection === 'column';
-    const availW = r.width - 20;
-    const availH = narrow ? window.innerHeight * 0.72 : r.height - 20;
+    // 盤面の枠（#board-wrap）の大きさは ui.js の layout() と style.css が決める。その中に縦横比を保って収める
+    const pad = 2;
+    const availW = r.width - pad;
+    const availH = r.height - pad;
     const s = Math.max(0.2, Math.min(availW / W, availH / H));
     const cssW = Math.floor(W * s);
     const cssH = Math.floor(H * s);
@@ -4209,12 +5251,37 @@ const Render = (() => {
     strokePath(pts);
     ctx.setLineDash([]);
     ctx.restore();
+    drawBeltArrows(path);
 
     // 投入口・出荷口
     const s = path[0];
     const e = path[path.length - 1];
     drawGate((s[0] + 0.5) * TILE, (s[1] + 0.5) * TILE, '投入', '#5a6378', 0, false);
     drawGate((e[0] + 0.5) * TILE, (e[1] + 0.5) * TILE, '出荷', '#ffb347', G.shipPulse, fv);
+  }
+  // ベルトの進む向きの矢印（3マスごと。ベルト型の機械が置いてあるマスと、出入口のそばは飛ばす）
+  function drawBeltArrows(path) {
+    const occupied = G.run && !G.run.demo ? (x, y) => !!machineAt(x, y) : () => false;
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.22)';
+    for (let k = 2; k < path.length - 2; k += 3) {
+      const [x, y] = path[k];
+      if (occupied(x, y)) continue;
+      const [nx, ny] = path[k + 1];
+      const a = Math.atan2(ny - y, nx - x);
+      ctx.save();
+      ctx.translate((x + 0.5) * TILE, (y + 0.5) * TILE);
+      ctx.rotate(a);
+      ctx.beginPath();
+      ctx.moveTo(9, 0);
+      ctx.lineTo(-6, -8);
+      ctx.lineTo(-2, 0);
+      ctx.lineTo(-6, 8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
   }
   function drawGate(x, y, label, color, pulse, fv) {
     const c = fv ? rainbow() : color;
@@ -4386,7 +5453,73 @@ const Render = (() => {
     }
     return { x: (sx / cells.length + 0.5) * TILE, y: (sy / cells.length + 0.5) * TILE };
   }
+  // 持っている（選んだ・ドラッグ中の）機械を置けるマスを光らせる。2回以上発動するマスほど明るい金色
+  function markPlaceable(R, hm) {
+    if (isBeltType(hm.type)) return;
+    const t = G.time;
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+      if (cellKind(x, y) !== 'side' || machineAt(x, y)) continue;
+      const hits = beltHits(x, y);
+      if (hits < 1) continue;
+      if (cellCount(hm.type) > 1 && fitRot({ ...hm, uid: -2 }, x, y, hm.rot || 0) == null) continue;
+      const a = hits >= 2 ? 0.28 + Math.sin(t * 5 + x + y) * 0.12 : 0.1;
+      ctx.fillStyle = hits >= 2 ? `rgba(255,212,71,${a})` : `rgba(127,214,255,${a})`;
+      rr(ctx, x * TILE + 5, y * TILE + 5, TILE - 10, TILE - 10, 9);
+      ctx.fill();
+      if (hits >= 2) {
+        ctx.font = `900 12px ${FONT}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = 'rgba(255,224,130,0.85)';
+        ctx.fillText(`×${hits}回`, (x + 0.5) * TILE, (y + 0.5) * TILE);
+      }
+    }
+  }
+  // 発動順：選んだ機械が当たるベルトのマスごとに、そこで発動する機械を光の線と①②③でつなぐ
+  function drawChain(m) {
+    const list = chainAt(m);
+    if (!list.length) return;
+    ctx.save();
+    for (const { x, y, list: ms } of list) {
+      const bx = (x + 0.5) * TILE;
+      const by = (y + 0.5) * TILE;
+      ctx.fillStyle = 'rgba(255,212,71,0.16)';
+      rr(ctx, x * TILE + 6, y * TILE + 6, TILE - 12, TILE - 12, 8);
+      ctx.fill();
+      ms.forEach((o, i) => {
+        const c = isBeltType(o.type) ? { x: bx, y: by } : machineCenter(o);
+        const me = o === m;
+        ctx.strokeStyle = me ? 'rgba(255,212,71,0.75)' : 'rgba(200,225,255,0.45)';
+        ctx.lineWidth = me ? 3 : 2;
+        ctx.setLineDash(me ? [] : [5, 4]);
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        ctx.lineTo(c.x, c.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // 番号はベルトのマスと機械のあいだに置く（同じ機械が何マスにも当たると、マスごとに番号が付く）
+        const px = isBeltType(o.type) ? bx - 14 : bx + (c.x - bx) * 0.42;
+        const py = isBeltType(o.type) ? by - 14 : by + (c.y - by) * 0.42;
+        ctx.fillStyle = me ? '#ffd447' : '#e6eefb';
+        ctx.beginPath();
+        ctx.arc(px, py, 9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(10,12,18,0.9)';
+        ctx.stroke();
+        ctx.fillStyle = '#10121a';
+        ctx.font = `900 12px ${FONT}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(i + 1), px, py + 0.5);
+      });
+    }
+    ctx.restore();
+  }
+  let chainFor = null;
   function drawHighlights(R) {
+    chainFor = null;
+    if (R.demo) return;
     const h = G.hover;
     if (G.state === 'build') {
       const held = heldMachine(R);
@@ -4394,7 +5527,12 @@ const Render = (() => {
       // ドラッグ中に R キーで向きを変えたときは、その向きで見せる（本物の向きは置くまで変えない）
       const hm = held && G.drag && G.drag.rot != null ? { ...held.m, rot: G.drag.rot } : held && held.m;
       const heldBelt = !!hm && isBeltType(hm.type);
+      if (hm) markPlaceable(R, hm);
       if (held && held.where === 'grid') outlineCells(cellsOf(hm), `rgba(255,212,71,${0.6 + Math.sin(G.time * 8) * 0.3})`, 1, 3);
+      // 発動順：盤面で選んだ機械（ドラッグ中でないとき）か、カーソルを合わせた機械
+      const hovM = h && inBounds(h.cx, h.cy) ? machineAt(h.cx, h.cy) : null;
+      const chainM = held && held.where === 'grid' && !(G.drag && G.drag.moved) ? held.m : !held && hovM ? hovM : null;
+      if (chainM && MACHINES[chainM.type].apply) chainFor = chainM; // 機械の上に描く（draw の中で、機械のあと）
       // チュートリアル：置いてほしいマス（2本のベルトに挟まれたマス）を金色に光らせる
       if (G.coachCells === 'pinch' && !heldBelt) {
         const a = 0.5 + Math.sin(G.time * 6) * 0.3;
@@ -4608,6 +5746,7 @@ const Render = (() => {
     ctx.restore();
   }
 
+  const BADGE_COLOR = { add: '#7fd6ff', mult: '#ff9a6a', transform: '#c9a2ff', special: '#a6f06a', passive: '#f7a8ff' };
   function drawMachines(R) {
     for (const m of placedMachines()) {
       const c = machineCenter(m);
@@ -4641,29 +5780,35 @@ const Render = (() => {
         ctx.fillStyle = '#ffd447';
         ctx.fillText(label, cx - hb.w - 2 + tw / 2, cy - hb.h + 2);
       }
-      // 状態で倍率が変わる機械（金庫・共鳴器・熟練工）は今の倍率を表示
-      const lm = !m.disabled && !broken ? liveMult(m) : null;
-      if (lm) {
-        const label = '×' + (lm >= 100 ? fmt(lm) : fmtMult(Math.round(lm * 10) / 10));
-        ctx.font = `900 11px ${FONT}`;
+      // 効果バッジ（右下の小さな札）：+2・×2・錬成・急冷… 数字で効く機械は、研究・★・隣の機械を入れた今の数字
+      if (!broken) {
+        let label = badgeOf(m) || '';
+        if (label.length > 7) label = label.slice(0, 7);
+        ctx.font = `900 10px ${FONT}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        const tw = ctx.measureText(label).width + 8;
-        ctx.fillStyle = 'rgba(8,9,13,0.8)';
-        rr(ctx, cx - tw / 2, cy + 15, tw, 14, 7);
+        const tw = Math.max(18, ctx.measureText(label).width + 8);
+        const belt = isBeltType(m.type);
+        const bx = belt ? cx + 31 - tw / 2 : cx + hb.w - tw / 2 + 3;
+        const by = belt ? cy + 24 : cy + hb.h - 3;
+        ctx.fillStyle = 'rgba(8,9,13,0.85)';
+        rr(ctx, bx - tw / 2 - 1, by - 7, tw + 2, 15, 7);
         ctx.fill();
-        ctx.fillStyle = '#ffd9a0';
-        ctx.fillText(label, cx, cy + 22);
+        ctx.fillStyle = BADGE_COLOR[d.kind] || '#e6eefb';
+        rr(ctx, bx - tw / 2, by - 6, tw, 13, 6);
+        ctx.fill();
+        ctx.fillStyle = '#10121a';
+        ctx.fillText(label, bx, by + 0.5);
       }
       const charge = chargeOf(m);
       if (charge && G.state === 'run' && !m.disabled && !broken) {
         const k = (m.counter % charge) / charge;
         const ready = m.counter % charge === charge - 1;
         ctx.fillStyle = 'rgba(0,0,0,0.6)';
-        rr(ctx, cx - 20, cy + 18, 40, 6, 3);
+        rr(ctx, cx - 14, cy - hb.h + 1, 28, 5, 2.5);
         ctx.fill();
         ctx.fillStyle = ready && Math.sin(G.time * 20) > 0 ? '#ffffff' : shade(d.color, 0.35);
-        rr(ctx, cx - 20, cy + 18, Math.max(6, 40 * (ready ? 1 : k)), 6, 3);
+        rr(ctx, cx - 14, cy - hb.h + 1, Math.max(5, 28 * (ready ? 1 : k)), 5, 2.5);
         ctx.fill();
       }
       const unpaid = m.disabled || (G.state === 'build' && upkeepShort(m)); // 維持費が払えない
@@ -4865,7 +6010,46 @@ const Render = (() => {
   function drawTexts() {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    for (const t of G.texts) {
+    // 青天井の札はほかの数字の上に描く
+    for (const t of G.texts) if (!t.sky) drawText(t);
+    for (const t of G.texts) if (t.sky) drawSkyText(t);
+    ctx.globalAlpha = 1;
+  }
+  // 青天井の機械の倍率：黒い札に金色の縁。桁が大きいほど大きく、縁が虹色に光る
+  function drawSkyText(t) {
+    const k = t.life / t.max;
+    const a = Math.max(0, 1 - Math.pow(k, 3));
+    const pop = t.life < 0.16 ? 1.5 - (t.life / 0.16) * 0.5 : 1;
+    const size = Math.round(t.size * pop);
+    ctx.font = `900 ${size}px ${FONT}`;
+    const w = ctx.measureText(t.s).width + size * 0.9;
+    const h = size * 1.45;
+    const x = Math.max(w / 2 + 2, Math.min(W - w / 2 - 2, t.x));
+    const y = Math.max(h / 2 + 2, t.y);
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.globalCompositeOperation = 'lighter';
+    drawGlow(t.color, x, y, w * 0.7, 0.35 + t.lv * 0.08);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgba(12,10,6,0.88)';
+    rr(ctx, x - w / 2, y - h / 2, w, h, h / 2);
+    ctx.fill();
+    let stroke = t.color;
+    if (t.lv >= 3) {
+      const g = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0);
+      const s = (G.time * 0.8) % 1;
+      ['#ffd447', '#ff7a59', '#f687b3', '#7fd6ff', '#6fe3a5', '#ffd447'].forEach((c, i) => g.addColorStop((i / 5 + s) % 1, c));
+      stroke = g;
+    }
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 2 + t.lv * 0.6;
+    ctx.stroke();
+    ctx.fillStyle = t.lv >= 2 ? '#fff6d0' : t.color;
+    ctx.fillText(t.s, x, y + 1);
+    ctx.restore();
+  }
+  function drawText(t) {
+    {
       const k = t.life / t.max;
       const a = Math.max(0, 1 - k * k);
       const pop = t.life < 0.12 ? 1.4 - (t.life / 0.12) * 0.4 : 1;
@@ -4883,7 +6067,6 @@ const Render = (() => {
       ctx.fillStyle = t.color;
       ctx.fillText(t.s, t.x, t.y);
     }
-    ctx.globalAlpha = 1;
   }
 
   // 画面全体のフラッシュとフィーバーの縁取り
@@ -4948,6 +6131,7 @@ const Render = (() => {
       drawHighlights(R);
       drawBeams();
       drawMachines(R);
+      if (chainFor && G.state === 'build') drawChain(chainFor);
       drawRings();
       drawItems();
     } else {
@@ -5003,8 +6187,12 @@ const UI = (() => {
     }
     requestAnimationFrame(step);
   }
-  function showOverlay(html, wide) {
-    card.classList.toggle('wide', wide === 'wide');
+  // mode：'wide'（広いカード）| 'title'（タイトル：後ろのデモが見えるように暗くしすぎない、小さなカード）| 'sheet'（スマホの「今日の情報」）
+  function showOverlay(html, mode) {
+    card.classList.toggle('wide', mode === 'wide');
+    card.classList.toggle('result', mode === 'result');
+    overlay.classList.toggle('title-mode', mode === 'title');
+    overlay.classList.toggle('sheet-mode', mode === 'sheet');
     card.innerHTML = html;
     overlay.classList.remove('hidden');
   }
@@ -5022,7 +6210,13 @@ const UI = (() => {
   // ---------- HUD ----------
   function updateHUD() {
     const R = G.run;
-    if (!R) {
+    // 納期の日で、まだノルマに届いていない：HUDを赤く脈打たせる
+    const due = !!R && !R.demo && !R.hi && (G.state === 'build' || G.state === 'run') && R.day >= R.deadline && R.phaseScore < R.quota;
+    if (hudCache.due !== due) {
+      hudCache.due = due;
+      $('hud').classList.toggle('due', due);
+    }
+    if (!R || R.demo) {
       setText('hud-day', '-');
       setText('hud-dayof', '');
       setText('hud-score', '0');
@@ -5033,17 +6227,18 @@ const UI = (() => {
       setText('hud-phase', '-');
       $('hud-bar').style.width = '0%';
       $('hud-bar-over').style.width = '0%';
+      updateCoach();
       return;
     }
     setText('hud-day', String(R.day));
-    setText('hud-dayof', R.hi ? ` / 最終日 ${R.hi.endDay}` : ` / 納期 ${R.deadline}`);
-    setText('hud-qlabel', R.hi ? 'ハイスコア / 自己ベスト' : `第${R.phase}期の出荷 / ノルマ`);
+    setText('hud-dayof', R.hi ? ` / 最終日 ${R.hi.endDay}` : R.day >= R.deadline ? ' / 今日が納期' : ` / 納期 ${R.deadline}`);
+    setText('hud-qlabel', R.hi ? 'ハイスコア / 自己ベスト' : `${R.endless ? 'エンドレス ' : ''}第${R.phase}期の出荷 / ノルマ`);
     setText('hud-score', fmt(G.dispScore));
     setText('hud-quota', isFinite(R.quota) ? fmt(R.quota) : '—');
     setText('hud-coins', String(R.coins));
     setText('hud-machines', `${slotsUsed()}/${dayCap()}`);
     setText('hud-items', G.state === 'run' ? `${R.itemsToday - R.spawned}` : `${R.itemsToday}`);
-    const on = R.boss ? `ボス：${R.boss.name}` : R.hi ? `ハイスコア あと${Math.max(0, R.hi.endDay - R.day + (G.state === 'result' ? 0 : 1))}日` : `第${R.phase}期 / ${PHASES}`;
+    const on = R.boss ? `ボス：${R.boss.name}` : R.hi ? `ハイスコア あと${Math.max(0, R.hi.endDay - R.day + (G.state === 'result' ? 0 : 1))}日` : R.endless ? `∞ 第${R.phase}期` : `第${R.phase}期 / ${PHASES}`;
     if (hudCache['hud-phase'] !== on) $('hud-phase').classList.toggle('boss', !!R.boss);
     setText('hud-phase', on);
     const ratio = G.dispScore / R.quota;
@@ -5084,12 +6279,24 @@ const UI = (() => {
   function renderSide() {
     infoKey = '';
     const R = G.run;
-    if (!R || G.state === 'title') {
-      side.innerHTML = `<div class="tip">タイトル画面</div>`;
+    // タイトル画面（後ろでデモが動いている）では、右の欄とドックを隠して盤面だけにする
+    const title = !R || !!R.demo || G.state === 'title';
+    if (document.body.classList.contains('is-title') !== title) {
+      document.body.classList.toggle('is-title', title);
+      layout();
+    }
+    if (title) {
+      side.innerHTML = '';
+      dock.innerHTML = '';
+      if (foot) foot.innerHTML = '';
+      if (detailBar) detailBar.classList.add('hidden');
       return;
     }
-    if (G.state === 'build') return renderBuild(R);
-    return renderRun(R);
+    renderDock(R);
+    renderFoot(R);
+    if (G.state === 'build') renderBuild(R);
+    else renderRun(R);
+    renderInfo(true);
   }
 
   function bossHTML(R) {
@@ -5111,17 +6318,17 @@ const UI = (() => {
     if (G.state !== 'build') return null;
     if (R.day === 1) {
       const bought = R.shop.some((s) => s.sold);
-      const afford = R.shop.some((s) => !s.sold && R.coins >= MACHINES[s.type].cost) && ownedCount() < ownedCap();
+      const afford = R.shop.some((s) => !s.sold && R.coins >= shopPrice(s)) && ownedCount() < ownedCap();
       if (R.sel != null) {
-        return { key: 'place', n: 2, cells: 'pinch', html: '盤面の <b>ベルトの横のマス</b> をクリックして置きます。<b style="color:#ffd447">金色に光るマス</b> は2本のベルトに挟まれていて、アイテム1個に <b>2回</b> 効きます。' };
+        return { key: 'place', n: 2, cells: 'pinch', html: '盤面の <b>ベルトの横のマス</b> をタップして置きます。<b style="color:#ffd447">金色に光るマス</b> は2本のベルトに挟まれていて、アイテム1個に <b>2回</b> 効きます。' };
       }
       if (R.tray.length) {
-        return { key: placedCount() ? 'pick2' : 'pick', n: 1, target: '.tray', html: placedCount() ? '残りの機械も置きましょう。右の <b>手持ち</b> の機械をクリックして選びます。' : 'まず機械を置きます。右の <b>手持ち</b> にある機械をクリックして選びます。' };
+        return { key: placedCount() ? 'pick2' : 'pick', n: 1, target: '.tray', html: placedCount() ? '残りの機械も置きましょう。<b>手持ち</b> の機械をタップして選びます。' : 'まず機械を置きます。右の <b>手持ち</b> にある機械をタップして選びます（盤面へドラッグしても置けます）。' };
       }
       if (!bought && afford) {
-        return { key: 'buy', n: 3, target: '.cards', html: '<b>ショップ</b> で機械を1台買ってみましょう。「+」は足し算、「×」は掛け算。足してから掛けると大きくなります。' };
+        return { key: 'buy', n: 3, target: '.cards', html: '下の <b>ショップ</b> で機械を1台買ってみましょう。カードの <b>「購入」</b> を押すと買えて、そのまま置く場所を選べます。「+」は足し算、「×」は掛け算。' };
       }
-      return { key: 'start', n: 4, target: '#btn-start', html: `準備ができました。<b>稼働開始</b> を押します。<br>ノルマは <b>期ごとの合計</b> です。第1期は、納期（${PHASE_DAYS}日目）までの合計で届けば大丈夫。` };
+      return { key: 'start', n: 4, target: '[data-ui="start"]', html: `準備ができました。<b>稼働開始</b> を押します。<br>ノルマは <b>期ごとの合計</b> です。第1期は、納期（${PHASE_DAYS}日目）までの合計で届けば大丈夫。` };
     }
     const seen = R.tut.seen;
     if (R.day === 2 && !seen.d2) {
@@ -5138,17 +6345,16 @@ const UI = (() => {
     if (!el) return;
     const st = coachStep();
     G.coachCells = st && st.cells ? st.cells : null;
-    // 光らせる相手（右の欄は描き直されるので、毎回つけ直す）
-    for (const q of ['.tray', '.cards', '#btn-start']) {
-      const t = side.querySelector(q);
-      if (t) t.classList.toggle('coach-target', !!st && st.target === q);
+    // 光らせる相手（右の欄・ドックは描き直されるので、毎回つけ直す）。PCとスマホで見えている方だけ
+    for (const q of ['.tray', '.cards', '[data-ui="start"]']) {
+      for (const t of document.querySelectorAll(`#side ${q}, #dock ${q}, #foot ${q}`)) t.classList.toggle('coach-target', !!st && st.target === q && t.offsetParent !== null);
     }
     const key = st ? st.key : '';
     if (key === coachKey) return;
     coachKey = key;
-    // 光らせた部品が画面の外（右の欄の下のほう）にあれば、見えるところまで送る
-    const tgt = st && st.target ? side.querySelector(st.target) : null;
-    if (tgt && tgt.scrollIntoView) tgt.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    // 光らせた部品が右の欄の下のほうにあれば、見えるところまで送る
+    const tgt = st && st.target ? [...document.querySelectorAll(`#side ${st.target}`)].find((t) => t.offsetParent !== null) : null;
+    if (tgt && tgt.scrollIntoView) tgt.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     if (!st) {
       el.classList.add('hidden');
       return;
@@ -5200,11 +6406,11 @@ const UI = (() => {
     const pat = Math.round((levPatentMul(lv) - 1) * 100);
     const locked = !R.phaseFresh; // この期はもう動き出している
     return `<div class="lev ${lv > 0 ? 'on' : ''} ${locked ? 'locked' : ''}" title="レバレッジ：上げるほどこの期のノルマが重くなり、納期達成の報酬と特許が増える（期の最初の日に決める）">
-        <button class="btn sub small" id="btn-lev-down" ${locked || lv <= 0 ? 'disabled' : ''}>◀</button>
+        <button class="btn sub small" data-ui="lev-down" ${locked || lv <= 0 ? 'disabled' : ''}>◀</button>
         <div class="lev-v"><b>レバレッジ Lv ${lv}</b>
           <span>ノルマ <b>×${fmt(Math.pow(LEV_QMUL, lv))}</b> ・ 納期達成の報酬 <b>+${coin}%</b> ・ 特許 <b>+${pat}%</b></span>
           ${locked ? '<span>この期は変えられません（期の最初の日に決めます）</span>' : ''}</div>
-        <button class="btn sub small" id="btn-lev-up" ${locked || lv >= LEV_MAX ? 'disabled' : ''}>▶</button>
+        <button class="btn sub small" data-ui="lev-up" ${locked || lv >= LEV_MAX ? 'disabled' : ''}>▶</button>
       </div>`;
   }
   // 今の期のノルマと、納期までの残り
@@ -5216,92 +6422,256 @@ const UI = (() => {
           <span class="${left <= 1 ? 'last' : ''}">${left <= 1 ? '今日が最終日' : `あと${left}日`}</span></div>`;
     }
     const need = Math.max(0, R.quota - R.phaseScore);
-    return `<div class="dock-est"><span>第${R.phase}期のノルマ</span><b>${fmt(R.quota)}</b></div>
+    const loan = R.loanUsed ? `<div class="dock-sub"><span style="color:#ffb3b3">前借り ${R.loanUsed}回ぶん、ノルマ +${Math.round((Math.pow(LOAN_QMUL, R.loanUsed) - 1) * 100)}%</span></div>` : '';
+    const loanNext = R.loan ? `<div class="dock-sub"><span style="color:#ffb3b3">前借り ${R.loan}回：次の期のノルマ +${Math.round((Math.pow(LOAN_QMUL, R.loan) - 1) * 100)}%</span></div>` : '';
+    return `${loan}${loanNext}<div class="dock-est"><span>第${R.phase}期のノルマ</span><b>${fmt(R.quota)}</b></div>
       <div class="dock-sub"><span>${R.phaseScore > 0 ? `これまで ${fmt(R.phaseScore)} ・ あと <b>${fmt(need)}</b>` : '納期までの合計で数えます'}</span>
         <span class="${left <= 1 ? 'last' : ''}">${left <= 1 ? '今日が納期' : `納期まで あと${left}日`}</span></div>`;
   }
 
-  // ショップ欄を閉じているか（見た目だけの設定。この端末にだけ覚える）
-  const UI_KEY = 'conveyor-alchemy-ui-v1';
-  let shopClosed = false;
-  try { shopClosed = !!(JSON.parse(localStorage.getItem(UI_KEY) || '{}').shopClosed); } catch (err) { /* 既定は開く */ }
-  function renderBuild(R) {
-    const owned = ownedCount();
-    const oCap = ownedCap();
-    const placed = slotsUsed(); // 大型は2枠ぶん
-    const sCost = runSlotCost();
-    const cards = R.shop
-      .map((s, i) => {
-        const d = MACHINES[s.type];
-        const cant = !s.sold && (R.coins < d.cost || owned >= oCap);
-        return `<button class="card ${s.sold ? 'sold' : ''} ${cant ? 'cant' : ''}" data-shop="${i}">
-          ${glyphHTML(s.type)}
-          <div><div class="name">${d.name}<span class="rar" style="color:${RARITY[d.rarity].color}">${RARITY[d.rarity].name}</span>${d.belt ? BELT_TAG : ''}${cellCount(s.type) > 1 ? '<span class="big-tag">2マス</span>' : ''}</div>
-          <div class="desc">${d.desc}</div></div>
-          <div class="price">${s.sold ? '売切' : d.cost + '枚'}</div>
-        </button>`;
-      })
-      .join('');
-    const tray = R.tray.length
-      ? R.tray.map((m) => glyphHTML(m.type, R.sel === m.uid ? 'sel' : '', `data-tray="${m.uid}" title="${MACHINES[m.type].name}"`, m.star)).join('')
-      : `<span class="empty">なし（盤面の機械をクリックで選択・移動）</span>`;
-    const rerollLabel = R.freeRerolls > 0 ? `リロール 無料（残り${R.freeRerolls}）` : `リロール ${R.rerollCost}枚`;
-    side.innerHTML = `
-      <div class="section">
-        <div class="layout-name">${R.layout.name}（ノルマ×${R.layout.qmul}） ・ 1日の原料 ${R.itemsToday}個</div>
-        ${bossHTML(R)}
-        ${specialHTML(R)}
-      </div>
+  // ---------- 準備画面 ----------
+  // PC：右の欄＝手持ち・機械の詳細・今日の情報・稼働開始 ／ 下の段いっぱい＝ショップ
+  // スマホ縦：盤面の下に ショップ（左）と手持ち（右の細い列）、いちばん下に稼働開始。機械の詳細は盤面の上に重ねる詳細バー
+  // style.css の同じ条件で切り替える
+  const MOBILE_MQ = '(max-width: 760px), (orientation: portrait) and (max-width: 1100px)';
+  const isMobile = () => window.matchMedia(MOBILE_MQ).matches;
+  let dock, detailBar, foot;
+  let lastShopStamp = -1; // ショップの入荷が変わったら、カードを左から順に配る
+  let shopSel = null; // タップ（クリック）して説明を見ているショップの品（番号）
 
-      <div class="section shop ${shopClosed ? 'closed' : ''}">
-        <h3><button class="fold" id="btn-shop-fold" title="ショップを${shopClosed ? '開く' : '閉じる'}">${shopClosed ? '▸' : '▾'} ショップ${shopClosed ? `<span>（${R.shop.filter((s) => !s.sold).length}品）</span>` : ''}</button>
-          ${shopClosed ? '' : `<button class="btn sub small" id="btn-reroll" ${R.freeRerolls <= 0 && R.coins < R.rerollCost ? 'disabled' : ''}>${rerollLabel}</button>`}</h3>
-        ${shopClosed ? '' : `<div class="cards">${cards}</div>`}
-      </div>
-      <div class="section">
-        <h3>設置枠 <span>${placed} / ${R.boardCap}${dayCap() < R.boardCap ? `（今日は${dayCap()}まで）` : ''}</span></h3>
-        <button class="btn sub" id="btn-slot" ${R.coins < sCost ? 'disabled' : ''}>設置枠を増やす +1　<b style="color:var(--coin)">${sCost}枚</b></button>
-      </div>
-      <div class="section">
-        <h3>手持ち <span>所持 ${owned} / ${oCap}台</span></h3>
-        <div class="tray">${tray}</div>
-        ${R.kits > 0 ? `<div class="kit-line">🔧 改造キット <b>${R.kits}個</b>：「+」「×」の機械を選んで「★改造」</div>` : ''}
-      </div>
-      <div class="tip">右クリック／<kbd>Esc</kbd>で選択解除。機械同士はクリックで入れ替え。</div>
-      <div class="start-dock">
-        ${placed > dayCap() ? `<div class="tip" style="color:var(--bad)">※ 設置枠は今日 ${dayCap()} まで。手持ちに戻してください</div>` : R.tray.length ? `<div class="tip" style="color:#ffb347">※ 手持ちの機械は稼働しません</div>` : ''}
-        ${levOpen() && !R.hi ? leverageHTML(R) : ''}
-        ${phaseDockHTML(R)}
-        <button class="btn" id="btn-start">稼働開始 <span style="font-size:12px;opacity:.7">[Space]</span></button>
-      </div>
-    `;
-    renderInfo(true);
+  // 盤面・右の欄・ショップの大きさを画面から決める。盤面は 13:9 のまま、余った幅は右の欄、余った高さはショップに回す（空白を出さない）
+  function layout() {
+    const main = $('main');
+    if (!main) return;
+    const root = document.documentElement.style;
+    const body = document.body;
+    if (body.classList.contains('is-title') || isMobile()) {
+      root.removeProperty('--board-w');
+      root.removeProperty('--board-h');
+      body.classList.remove('short');
+      side.classList.remove('side-wide');
+      Render.resize();
+      return;
+    }
+    const r = main.getBoundingClientRect();
+    const PAD = 8;
+    const GAP = 8;
+    const w = r.width - PAD * 2;
+    const h = r.height - PAD * 2;
+    // 高さがとても低い画面（横向きのスマホなど）：盤面を左いっぱいにして、右に手持ちとショップを重ねる
+    const short = h < 470;
+    body.classList.toggle('short', short);
+    let bh;
+    if (short) bh = Math.min(h, ((w - 320 - GAP) * ROWS) / COLS);
+    else {
+      const shopH = Math.min(276, Math.max(228, h * 0.3));
+      bh = Math.min(h - shopH - GAP, ((w - Math.max(310, w * 0.22) - GAP) * ROWS) / COLS);
+    }
+    bh = Math.max(140, Math.floor(bh));
+    const bw = Math.floor((bh * COLS) / ROWS);
+    root.setProperty('--board-w', bw + 'px');
+    root.setProperty('--board-h', bh + 'px');
+    // 右の欄が広いときは、手持ち（左）と機械の詳細（右）を横に並べる
+    side.classList.toggle('side-wide', !short && w - bw - GAP >= 560);
+    Render.resize();
   }
 
+  // ドット絵のコイン（値段の欄に使う）
+  const PX_COIN = '<svg class="px-coin" viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><path fill="#6b3d00" d="M2 0h4v1h1v1h1v4h-1v1h-1v1h-4v-1h-1v-1h-1v-4h1v-1h1z"/><path fill="#ffd447" d="M2 1h4v1h1v4h-1v1h-4v-1h-1v-4h1z"/><path fill="#fff3a0" d="M2 2h1v2h-1zM3 1h2v1h-2z"/><path fill="#d08a00" d="M5 5h1v1h-1zM4 3h1v2h-1z"/></svg>';
+  function pxPrice(n, old) {
+    return `<span class="px-price">${PX_COIN}${old != null ? `<s>${old}</s>` : ''}<b>${n}</b></span>`;
+  }
+
+  function dayInfoHTML(R) {
+    return `<div class="day-info">
+        <div class="layout-name">${R.daily ? `<b class="daily-tag">日替わり ${R.daily.label}</b>` : ''}${R.endless ? '<b class="endless-tag">∞ エンドレス</b>' : ''}${R.layout.name}（ノルマ×${R.layout.qmul}） ・ 原料 ${R.itemsToday}個/日</div>
+        ${bossHTML(R)}
+        ${specialHTML(R)}
+      </div>`;
+  }
+  // 稼働開始の前の注意（置ききれていない・枠を超えている）
+  function warnHTML(R) {
+    const free = dayCap() - slotsUsed();
+    if (free < 0) return `<div class="warn bad">設置枠は今日 ${dayCap()} まで（${-free}枠オーバー）</div>`;
+    if (R.tray.length && free > 0) return `<div class="warn">盤面の空き <b>${free}枠</b>（手持ちは稼働しない）</div>`;
+    if (R.tray.length) return '<div class="warn">手持ちの機械は稼働しません</div>';
+    return '';
+  }
+  function slotBtnHTML(R) {
+    const c = runSlotCost();
+    const cap = dayCap() < R.boardCap ? `（今日${dayCap()}）` : '';
+    return `<button class="slot-btn" data-ui="slot" ${R.coins < c ? 'disabled' : ''} title="設置枠を1つ増やす（${SLOT_GROWTH}倍ずつ高くなる）">
+      <span>設置枠 <b>${slotsUsed()}/${R.boardCap}</b>${cap}</span><em>＋1枠 ${pxPrice(c)}</em></button>`;
+  }
+  // 手持ち（買った機械・置いていない機械）。右の欄の上（スマホは右の細い列）
+  function tileHTML(m, sel) {
+    const d = MACHINES[m.type];
+    return `<div class="tile ${sel ? 'sel' : ''}" data-tray="${m.uid}" title="${d.name}">${glyphHTML(m.type, '', '', m.star)}<span>${d.name}</span></div>`;
+  }
+  function handHTML(R, build) {
+    const tiles = R.tray.map((m) => tileHTML(m, R.sel === m.uid)).join('');
+    const room = ownedCap() - ownedCount();
+    return `<div class="hand" id="hand-zone">
+        <div class="side-h"><b>手持ち</b><span class="hand-n ${room <= 0 ? 'full' : ''}" title="持っている機械（盤面＋手持ち） / 持てる台数（設置枠 +${R.bench}台）">所持 ${ownedCount()}/${ownedCap()}台</span>${R.kits ? `<span class="kit-chip" title="改造キット（「+」「×」の機械を選んで使う）">🔧×${R.kits}</span>` : ''}</div>
+        <div class="tray">${tiles || `<span class="empty">${build ? 'ショップで買った機械がここに入ります' : 'なし'}</span>`}</div>
+        ${build ? `<div class="hand-foot">${slotBtnHTML(R)}<span class="stash-hint">盤面の機械をここへドラッグ → 手持ちに戻す</span></div>` : ''}
+      </div>`;
+  }
+  function speedHTML() {
+    return `<div class="speed-row"><span>速度</span>${[1, 2, 4].map((s) => `<button class="btn sub ${G.speedMul === s ? 'on' : ''}" data-ui="speed" data-speed="${s}">×${s}</button>`).join('')}</div>`;
+  }
+  function renderBuild(R) {
+    side.innerHTML = `
+      <div class="side-a">${handHTML(R, true)}${dayInfoHTML(R)}${levOpen() && !R.hi ? leverageHTML(R) : ''}</div>
+      <div class="side-b"><div class="info detail" id="detail"></div></div>`;
+  }
+  // ショップの段の右端（PC）：ノルマと納期、稼働開始ボタン。稼働中は速度
+  function dockStartHTML(R) {
+    if (G.state !== 'build') return `<div class="dock-start run"><div class="ds-run">DAY ${R.day} 稼働中</div>${speedHTML()}<div class="tip"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> キーでも変えられます</div></div>`;
+    return `<div class="dock-start">
+        ${warnHTML(R)}
+        ${phaseDockHTML(R)}
+        <button class="btn start-btn" data-ui="start">▶ 稼働開始 <span class="kbd-hint">[Space]</span></button>
+      </div>`;
+  }
   function renderRun(R) {
     side.innerHTML = `
-      <div class="section">
-        <div class="layout-name">${R.hi ? `ハイスコアモード ・ DAY ${R.day} 稼働中（最終日 DAY ${R.hi.endDay}）` : `第${R.phase}期 ・ DAY ${R.day} 稼働中（納期 DAY ${R.deadline}）`}</div>
-        ${bossHTML(R)}
-      </div>
-      <div class="section">
-        <h3>本日の稼働</h3>
+      <div class="side-a">${handHTML(R, false)}
+        <div class="day-info"><div class="layout-name">${R.daily ? `<b class="daily-tag">日替わり ${R.daily.label}</b>` : ''}${R.hi ? `ハイスコアモード ・ DAY ${R.day} 稼働中（最終日 DAY ${R.hi.endDay}）` : `${R.endless ? '∞ エンドレス ' : ''}第${R.phase}期 ・ DAY ${R.day} 稼働中（納期 DAY ${R.deadline}）`}</div>${bossHTML(R)}</div>
         <div class="stats">
           <span>今日の出荷</span><span class="v" id="rs-today">0</span>
           <span>投入</span><span class="v" id="rs-spawn">0</span>
           <span>最高価値</span><span class="v" id="rs-best">0</span>
           <span>連続出荷</span><span class="v" id="rs-combo">0</span>
-          <span>複製</span><span class="v" id="rs-dup">0</span>
-          <span>分裂</span><span class="v" id="rs-split">0</span>
+          <span>複製・分裂</span><span class="v"><span id="rs-dup">0</span>・<span id="rs-split">0</span></span>
           <span>消滅</span><span class="v" id="rs-destroy">0</span>
           <span>機械からのコイン</span><span class="v" id="rs-coins">+0</span>
         </div>
       </div>
-      <div class="tip"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> で速度切替。機械にカーソルを合わせると詳細が出ます。</div>`;
+      <div class="side-b"><div class="info detail" id="detail"></div></div>`;
     for (const k of Object.keys(hudCache)) if (k.startsWith('rs-')) delete hudCache[k];
-    renderInfo(true);
   }
-
+  // ショップの品の買える状態：'can' | 'poor'（コイン不足）| 'full'（手持ちが満杯）| 'na'（消耗品が今は使えない）| 'sold'
+  function buyState(s, R) {
+    if (s.sold) return 'sold';
+    if (!s.item && ownedCount() >= ownedCap()) return 'full';
+    if (s.item && !CONSUMABLES[s.item].ok(R)) return 'na';
+    if (R.coins < shopPrice(s)) return 'poor';
+    return 'can';
+  }
+  // 「購入」ボタン（値段はドット絵の札）。押せないときは理由を書く
+  function buyBtnHTML(s, i, R, big) {
+    const st = buyState(s, R);
+    const price = shopPrice(s);
+    const build = G.state === 'build';
+    const label = st === 'sold' ? '売り切れ' : st === 'full' ? '手持ちが満杯' : st === 'poor' ? 'コイン不足' : st === 'na' ? '今は使えない' : s.item ? '使う' : '購入';
+    const tag = price ? pxPrice(price, s.sale ? MACHINES[s.type].cost : null) : '<span class="px-price free"><b>無料</b></span>';
+    return `<button class="buy ${st}${s.sale ? ' sale' : ''}${big ? ' big' : ''}" data-buy="${i}" ${st === 'can' && build ? '' : 'disabled'}><span class="buy-l">${label}</span>${tag}</button>`;
+  }
+  // ショップのカード1枚。機械と消耗品は色も形も分ける（機械：紺の板と四角い絵／消耗品：緑の券と丸い絵）
+  function shopCardHTML(s, i, R, pop) {
+    const lock = s.sold ? '' : `<button class="lock ${s.lock ? 'on' : ''}" data-lock="${i}" title="${s.lock ? '取り置きをやめる' : '取り置き：リロールしても次の日も残す（1枠まで）'}">${s.lock ? '🔒' : '🔓'}</button>`;
+    const st = buyState(s, R);
+    const base = `${st}${s.sale ? ' sale' : ''}${s.lock ? ' locked' : ''}${pop ? ' pop' : ''}${shopSel === i ? ' picked' : ''}`;
+    const sold = s.sold ? '<div class="sold-stamp">SOLD</div>' : '';
+    if (s.item) {
+      const c = CONSUMABLES[s.item];
+      return `<div class="card item ${base}" data-shop="${i}" style="--i:${i};--ic:${c.color}">
+        <div class="c-kind"><span>消耗品</span><em>買ったその場で効く</em>${lock}</div>
+        <div class="c-top"><div class="glyph item-g">${c.glyph}</div><div class="c-nm"><div class="name">${c.name}</div><div class="c-tags"><span class="t-item">1回きり</span></div></div></div>
+        <div class="core">${c.short}</div><div class="detail">${c.desc}</div>
+        ${buyBtnHTML(s, i, R)}${sold}</div>`;
+    }
+    const d = MACHINES[s.type];
+    const tags = [];
+    if (s.star) tags.push('<span class="t-star">★改造済み</span>');
+    if (!s.sold && synergyWith(s.type)) tags.push('<span class="t-syn">相性◎</span>');
+    if (d.sky) tags.push('<span class="t-sky">青天井</span>');
+    if (d.belt) tags.push('<span class="t-belt">ベルト型</span>');
+    if (cellCount(s.type) > 1) tags.push('<span class="t-big">2マス</span>');
+    if (d.upkeep) tags.push(`<span class="t-up">維持費${d.upkeep}</span>`);
+    return `<div class="card mach r${d.rarity} ${base}" data-shop="${i}" style="--i:${i};--rc:${RARITY[d.rarity].color}">
+      ${s.sale ? `<div class="c-kind sale"><span>特価</span><em>今日だけ半額！</em>${lock}</div><div class="sale-sticker">-50%</div>` : `<div class="c-kind"><span>機械</span><em>${RARITY[d.rarity].name}</em>${lock}</div>`}
+      <div class="c-top">${glyphHTML(s.type, '', '', s.star || 0)}<div class="c-nm"><div class="name">${d.name}</div><div class="c-tags">${tags.join('')}</div></div></div>
+      <div class="core">${d.short}</div><div class="detail">${d.desc}</div>
+      ${buyBtnHTML(s, i, R)}${sold}</div>`;
+  }
+  // 画面の下の段：ショップだけ（PCは横いっぱい。スマホは盤面の下の左側）
+  function renderDock(R) {
+    const build = G.state === 'build';
+    const pop = R.shopStamp !== lastShopStamp;
+    lastShopStamp = R.shopStamp;
+    if (pop) shopSel = null;
+    if (shopSel != null && (!R.shop[shopSel] || R.shop[shopSel].sold)) shopSel = null;
+    // 入荷したとき：カードを1枚ずつ配る音（稼働開始の直後などで描き直しただけのときは鳴らさない）
+    if (pop && build) Sfx.restock(Math.min(7, R.shop.length), 0.11);
+    const cards = R.shop.map((s, i) => shopCardHTML(s, i, R, pop && build)).join('');
+    const free = R.freeRerolls > 0;
+    const rdis = !build || (!free && R.coins < R.rerollCost);
+    dock.className = (build ? 'building' : 'running') + (pop && build ? ' restock' : '');
+    dock.innerHTML = `
+      <div class="dock-h"><b>ショップ</b>${pop && build ? '<span class="restock-tag">入荷！</span>' : ''}
+        <span class="shop-hint">${build ? (isMobile() ? 'カードをタップで説明 ・「購入」で買う' : 'カードにカーソルを合わせると説明 ・「購入」で買う（盤面へドラッグしても買える）') : '稼働中は買えません'}</span>
+        <span class="sell-hint">ここへ離すと売却</span>
+        <button class="reroll" data-ui="reroll" title="品ぞろえを入れ替える（🔒の品は残る）" ${rdis ? 'disabled' : ''}><span>↻ 入れ替え</span>${free ? `<span class="px-price free"><b>無料×${R.freeRerolls}</b></span>` : pxPrice(R.rerollCost)}</button></div>
+      <div class="dock-body"><div class="cards">${cards}</div>${dockStartHTML(R)}</div>`;
+  }
+  // スマホのいちばん下：今日の情報と稼働開始（稼働中は速度）
+  function renderFoot(R) {
+    if (!foot) return;
+    foot.innerHTML = G.state === 'build'
+      ? `<button class="btn sub info-chip" data-ui="info" title="今日の情報">📋 今日${R.boss ? '<i class="dot"></i>' : ''}</button><button class="btn start-big" data-ui="start">▶ 稼働開始</button>`
+      : speedHTML();
+  }
+  // 選んだ機械の操作ボタン（PC：右の欄の詳細の下）
+  function actionsHTML(f, R) {
+    const m = f.m;
+    return `<div class="act-row">
+        ${R.kits > 0 && canStar(m) ? `<button class="btn small" data-ui="kit">★改造（キット${R.kits}）</button>` : ''}
+        ${cellCount(m.type) > 1 ? '<button class="btn sub small" data-ui="rot">⟳ 向きを変える <kbd>R</kbd></button>' : ''}
+        ${f.where === 'grid' ? '<button class="btn sub small" data-ui="stash">手持ちに戻す</button>' : ''}
+        <button class="btn sub small sell-btn" data-ui="sell">売却 ${pxPrice('+' + sellValue(m))}</button>
+        <button class="btn sub small" data-ui="unsel" title="選択解除（右クリック・Esc）">✕</button>
+      </div>
+      <div class="hint">${f.where === 'tray' ? '盤面の <b>光っているマス</b> をクリックして置く（金色のマスは2回発動）' : '別のマスをクリックすると動かせます'}。ドラッグでも動かせます。</div>`;
+  }
+  // スマホの詳細バー（盤面の上に重ねる）：選んだ機械
+  function barHTML(f, R) {
+    const m = f.m;
+    return `<button class="db-x" data-ui="unsel" title="選択解除">✕</button>
+      <div class="db-body">${machineInfoHTML(m)}</div>
+      <div class="db-btns">
+        ${R.kits > 0 && canStar(m) ? '<button class="btn small" data-ui="kit">★改造</button>' : ''}
+        ${cellCount(m.type) > 1 ? '<button class="btn sub small" data-ui="rot">⟳ 回転</button>' : ''}
+        ${f.where === 'grid' ? '<button class="btn sub small" data-ui="stash">手持ちへ</button>' : ''}
+        <button class="btn sub small sell-btn" data-ui="sell">売却 ${pxPrice('+' + sellValue(m))}</button>
+      </div>
+      <div class="db-hint">${f.where === 'tray' ? '盤面の光っているマスをタップして置く' : '別のマスをタップすると動かせます'}</div>`;
+  }
+  // スマホの詳細バー：タップしたショップの品
+  function shopBarHTML(s, i, R) {
+    return `<button class="db-x" data-ui="unpick" title="閉じる">✕</button>
+      <div class="db-body">${shopInfoHTML(s)}</div>
+      <div class="db-btns">${buyBtnHTML(s, i, R, true)}</div>`;
+  }
+  // ショップの品の詳細（PC：右の欄／スマホ：詳細バー）
+  function shopInfoHTML(s) {
+    if (s.item) {
+      const c = CONSUMABLES[s.item];
+      return `<div class="hd"><div class="glyph item-g" style="--ic:${c.color}">${c.glyph}</div><div><div class="nm">${c.name}</div>
+        <div class="meta"><span class="tag item">消耗品</span>買ったその場で効く（手持ちの枠は使わない）</div></div></div><div class="desc">${c.desc}</div>`;
+    }
+    const d = MACHINES[s.type];
+    const tags = (d.belt ? BELT_TAG + ' ' : '') + `<span class="tag">${KIND_LABEL[d.kind]}</span>` + (d.sky ? '<span class="tag sky">青天井</span>' : '') + (cellCount(s.type) > 1 ? '<span class="tag warn">大型：2マス・2枠</span>' : '') + (d.upkeep ? `<span class="tag warn">維持費 ${d.upkeep}枚/日</span>` : '');
+    const syn = synergyWith(s.type);
+    return `<div class="hd">${glyphHTML(s.type, '', '', s.star || 0)}<div><div class="nm">${d.name} <span class="rar" style="color:${RARITY[d.rarity].color}">${RARITY[d.rarity].name}</span></div>
+      <div class="meta">${tags}</div></div></div><div class="desc">${d.desc}</div>
+      ${s.sale ? `<div class="note sale">特価：今日だけ半額（${d.cost}枚 → <b>${shopPrice(s)}枚</b>）</div>` : ''}
+      ${s.star ? '<div class="note star">★改造済み：買った時点で ★1（効果 +30%）</div>' : ''}
+      ${syn ? `<div class="note syn">相性◎：持っている「${MACHINES[syn].name}」と組み合わせられる</div>` : ''}
+      ${d.sky ? '<div class="note sky">青天井：組み合わせ次第で倍率に上限がない</div>' : ''}
+      ${modOn(s.type) ? `<div class="mod-line"><b>追加効果「${d.mod.name}」</b>　${d.mod.desc}</div>` : ''}`;
+  }
   // 置いた場所・持ちコインなどで決まる「今の効果」
   function stateNote(m) {
     const R = G.run;
@@ -5342,7 +6712,7 @@ const UI = (() => {
       case 'prism': {
         if (!placed) return '';
         const n = new Set(adjMachineList(m.x, m.y).filter((o) => !offline(o)).map((o) => o.type)).size;
-        return `隣の機械 ${n}種類 → <b>×${fmtMult(1 + (modOn('prism') ? 0.75 : 0.5) * n)}</b>`;
+        return `隣の機械 ${n}種類 → <b>×${fmtMult(1 + (modOn('prism') ? 1.5 : 1) * n)}</b>`;
       }
       case 'alchemist': {
         const a = countPlaced('alchemist') || 1;
@@ -5406,124 +6776,131 @@ const UI = (() => {
     if (tl && isTunable(m.type)) extra += `<div class="meta" style="color:#7fd6ff">研究「習熟」Lv${tl}：効果 +${Math.round(TUNE_STEP * 100 * tl)}%</div>`;
     // 研究した「追加効果」
     if (modOn(m.type)) extra += `<div class="mod-line"><b>追加効果「${d.mod.name}」</b>　${d.mod.desc}</div>`;
-    const tags = (cellCount(m.type) > 1 ? '<span class="tag warn">大型：2マス・2枠</span>' : d.size > 1 && slotWeight(m) > 1 ? '<span class="tag warn">大型：2枠</span>' : '') + (upkeepOf(m) ? `<span class="tag warn">維持費 ${upkeepOf(m)}枚/日</span>` : '');
-    return `<div class="hd">${glyphHTML(m.type, '', '', m.star)}<div><div class="nm">${d.name}
-      <span class="rar" style="color:${RARITY[d.rarity].color};font-size:11px">${RARITY[d.rarity].name}</span></div>
+    const tags = (d.sky ? '<span class="tag sky">青天井</span>' : '') + (cellCount(m.type) > 1 ? '<span class="tag warn">大型：2マス・2枠</span>' : d.size > 1 && slotWeight(m) > 1 ? '<span class="tag warn">大型：2枠</span>' : '') + (upkeepOf(m) ? `<span class="tag warn">維持費 ${upkeepOf(m)}枚/日</span>` : '');
+    const badge = m.x >= 0 ? `<span class="live-badge">${badgeOf(m)}</span>` : '';
+    return `<div class="hd">${glyphHTML(m.type, '', '', m.star)}<div><div class="nm">${d.name}${badge}
+      <span class="rar" style="color:${RARITY[d.rarity].color}">${RARITY[d.rarity].name}</span></div>
       <div class="meta">${d.belt ? BELT_TAG + ' ' : ''}<span class="tag">${KIND_LABEL[d.kind]}</span>${tags}売値 ${sellValue(m)}枚</div></div></div>
-      <div>${d.desc}</div>${extra}`;
+      <div class="desc">${d.desc}</div>${extra}`;
   }
 
-  // 機械の詳細：右の欄の上にポップアップで出す（盤面・手持ちの機械にカーソルを合わせる／選ぶと出る）
+  // 機械の詳細：PCは右の欄に大きく出す（盤面・手持ち・ショップにカーソルを合わせる／選ぶと変わる）
+  // スマホは、機械やショップのカードをタップしたときだけ、盤面の上に詳細バーを重ねる
   let hoverTray = null; // カーソルを合わせている手持ちの機械
-  function placePopup(el) {
-    const r = side.getBoundingClientRect();
-    const narrow = r.top > window.innerHeight * 0.5; // 狭い画面で右の欄が盤面の下にあるとき
-    el.style.left = Math.max(8, r.left + 8) + 'px';
-    el.style.width = Math.min(r.width - 16, window.innerWidth - 16) + 'px';
-    if (narrow) {
-      el.style.top = 'auto';
-      el.style.bottom = '8px';
-    } else {
-      el.style.bottom = 'auto';
-      el.style.top = Math.max(8, r.top + 8) + 'px';
-    }
-    el.style.maxHeight = (narrow ? window.innerHeight * 0.5 : r.height - 16) + 'px';
-  }
+  let hoverShop = null; // カーソルを合わせているショップの品（番号）
   function renderInfo(force) {
-    const el = $('info-pop');
-    if (!el) return;
     const R = G.run;
-    // ドラッグ中は詳細を出さない（指や盤面を隠さないように）
-    const active = R && (G.state === 'build' || G.state === 'run') && overlay.classList.contains('hidden') && !(G.drag && G.drag.moved);
+    const el = $('detail');
+    const active = !!R && !R.demo && (G.state === 'build' || G.state === 'run') && !(G.drag && G.drag.moved);
     const h = active ? G.hover : null;
     const selF = active && G.state === 'build' && R.sel != null ? findMachine(R.sel) : null;
     const hovM = h && inBounds(h.cx, h.cy) ? machineAt(h.cx, h.cy) : null;
-    // カーソルを合わせている手持ちの機械（盤面に置いたあとや売ったあとは出さない）
     let trayF = active && hoverTray != null ? findMachine(hoverTray) : null;
     if (trayF && trayF.where !== 'tray') trayF = null;
-    if (hoverTray != null && !trayF && (!R || !findMachine(hoverTray) || findMachine(hoverTray).where !== 'tray')) hoverTray = null;
+    const okShop = (i) => i != null && R && R.shop[i] && !R.shop[i].sold;
+    const shopI = active && okShop(hoverShop) ? hoverShop : active && okShop(shopSel) ? shopSel : null;
+    const shopS = shopI != null ? R.shop[shopI] : null;
     const sp = !hovM && h && G.state === 'build' && inBounds(h.cx, h.cy) ? specialAt(h.cx, h.cy) : null;
-    const key = `${G.state}|${selF ? selF.m.uid + ':' + selF.m.x + ',' + selF.m.y + '*' + selF.m.star : ''}|${hovM ? hovM.uid : ''}|${trayF ? trayF.m.uid : ''}|${sp || ''}|${R ? R.coins + ':' + R.kits : ''}`;
-    if (!force && key === infoKey) {
-      if (!el.classList.contains('hidden')) placePopup(el);
-      return;
-    }
+    const key = [
+      G.state, selF ? `${selF.m.uid}:${selF.m.x},${selF.m.y}*${selF.m.star}r${selF.m.rot}` : '', hovM ? hovM.uid + '*' + hovM.star : '',
+      trayF ? trayF.m.uid : '', shopS ? shopI + ':' + (shopS.type || shopS.item) : '', shopSel, sp || '', R ? R.coins + ':' + R.kits + ':' + slotsUsed() + ':' + ownedCount() : '', el ? 1 : 0,
+    ].join('|');
+    if (!force && key === infoKey) return;
     infoKey = key;
-    // 選択中 > 盤面でカーソルを合わせた機械 > 手持ちでカーソルを合わせた機械 > 特設マス
+    // 選択中 > 盤面でカーソルを合わせた機械 > 手持ち > ショップの品 > 特設マス
     let html = '';
-    if (selF) {
-      html = `<button class="pop-close" id="btn-unsel" title="選択解除（右クリック・Esc）">×</button>${machineInfoHTML(selF.m)}
-        <div class="hint" style="margin-top:6px">置きたいマスをタップ（ドラッグでも動かせます）</div>
-        <div class="row" style="margin-top:8px">
-          <button class="btn sub small" id="btn-sell">売却 +${sellValue(selF.m)}枚</button>
-          ${selF.where === 'grid' ? `<button class="btn sub small" id="btn-stash">手持ちに戻す</button>` : ''}
-          ${cellCount(selF.m.type) > 1 ? `<button class="btn sub small" id="btn-rot">向きを変える <kbd>R</kbd></button>` : ''}
-          ${R.kits > 0 && canStar(selF.m) ? `<button class="btn small" id="btn-kit">★改造する（キット残り${R.kits}）</button>` : ''}
-        </div>`;
-    } else if (hovM) {
-      html = machineInfoHTML(hovM);
-    } else if (trayF) {
-      html = machineInfoHTML(trayF.m) + `<div class="hint" style="margin-top:6px">クリックで選んで、盤面に置く</div>`;
-    } else if (sp) {
+    if (selF) html = machineInfoHTML(selF.m) + actionsHTML(selF, R);
+    else if (hovM) html = machineInfoHTML(hovM);
+    else if (trayF) html = machineInfoHTML(trayF.m) + '<div class="hint">クリックで選んで、盤面の光っているマスに置く</div>';
+    else if (shopS) html = shopInfoHTML(shopS) + (G.state === 'build' ? `<div class="act-row">${buyBtnHTML(shopS, shopI, R, true)}</div>` : '');
+    else if (sp) {
       html = sp === 'boost'
         ? '<div class="hint"><b style="color:#ffd447">★強化マス</b>：今日ここに置いた機械は発動回数が1増えます。</div>'
         : '<div class="hint"><b style="color:#ff6b6b">✕故障マス</b>：今日ここに置いた機械は動きません。</div>';
     }
-    if (!html) {
-      el.classList.add('hidden');
-      return;
+    if (el) {
+      el.innerHTML = html || `<div class="hint empty-hint"><b>機械の詳細</b>${G.state === 'build'
+        ? '盤面・手持ち・ショップの機械にカーソルを合わせるか、クリックすると、ここにくわしい効果が出ます。<br>盤面の機械を選ぶと、<b>発動する順番</b>（①②③）も盤面に出ます。'
+        : '機械にカーソルを合わせると、くわしい効果が出ます。'}</div>`;
+      el.classList.toggle('pinned', !!selF || (!!shopS && shopI === shopSel));
     }
-    el.innerHTML = html;
-    el.classList.toggle('pinned', !!selF);
-    el.classList.remove('hidden');
-    placePopup(el);
+    if (detailBar) {
+      const pick = !selF && active && G.state === 'build' && okShop(shopSel) ? R.shop[shopSel] : null;
+      if (selF) detailBar.innerHTML = barHTML(selF, R);
+      else if (pick) detailBar.innerHTML = shopBarHTML(pick, shopSel, R);
+      detailBar.classList.toggle('hidden', !selF && !pick);
+      detailBar.classList.toggle('shop', !selF && !!pick);
+    }
   }
 
   // ---------- オーバーレイ ----------
   function showTitle() {
     G.state = 'title';
-    G.run = null;
-    G.items = [];
+    startDemo(); // 後ろで見本の工場を動かす
     G.dirty = true;
     const b = G.meta.best;
+    const dl = dailyInfo();
+    const drec = G.meta.daily && G.meta.daily[dl.key];
     showOverlay(`
-      <h1>コンベア錬金</h1>
-      <p class="lead">ベルトの脇に機械を並べ、流れる原料を <b style="color:var(--accent)">足し算→掛け算</b> で膨らませろ。<br>${PHASE_DAYS}日ごとの納期までにノルマを出荷して、第${PHASES}期の完走をめざせ。研究を重ねてやっと届く、遠い大口取引。</p>
-      ${devOn() ? '<p class="lead" style="color:#ff8f8f;font-weight:700">🛠 テストモード中：研究は「研究所」で自由にオンオフした内容で遊びます</p>' : ''}
-      <div class="menu-btns">
-        <button class="btn" data-act="new">出勤する</button>
-        ${researchBtnHTML('研究所')}
-        <button class="btn sub" data-act="trophies">実績 <span style="font-size:14px;color:var(--coin)">🏆 ${achCount()} / ${ACHIEVEMENTS.length}</span></button>
-        <button class="btn sub" data-act="records">記録 <span style="font-size:14px;color:var(--muted)">最高 第${b.phase || 0}期</span></button>
-        <div class="btn-row">
-          <button class="btn sub" data-act="howto">遊び方</button>
-          <button class="btn sub" data-act="tut-replay">チュートリアル</button>
+      <div class="title-card">
+        <h1>コンベア錬金</h1>
+        <p class="lead">ベルトの脇に機械を並べ、流れる原料を <b style="color:var(--accent)">足して→掛けて</b> 膨らませろ。${PHASE_DAYS}日ごとの納期を越えて、第${PHASES}期の完走をめざす工場ローグライク。</p>
+        ${devOn() ? '<p class="lead" style="color:#ff8f8f;font-weight:700;font-size:12px">🛠 テストモード中：研究は「研究所」で自由にオンオフした内容で遊びます</p>' : ''}
+        <div class="menu-btns">
+          <button class="btn" data-act="new">▶ 出勤する</button>
+          <button class="btn daily-btn" data-act="daily"><b>📅 日替わりチャレンジ（${dl.label}）</b>
+            <small>${drec ? `今日のベスト：第${drec.phases}期・総出荷 ${fmt(drec.total)}（${drec.plays}回目まで）` : `全員同じ工場・研究ポイント ${DAILY_RP} で挑む ・ 今日はじめてなら特許 +${dl.bonus}`}</small></button>
+          ${researchBtnHTML('研究所')}
+          <div class="btn-row">
+            <button class="btn sub" data-act="trophies">🏆 実績 <span style="color:var(--coin)">${achCount()}/${ACHIEVEMENTS.length}</span></button>
+            <button class="btn sub" data-act="records">📈 記録</button>
+          </div>
+          <div class="btn-row">
+            <button class="btn sub" data-act="howto">遊び方</button>
+            <button class="btn sub" data-act="tut-replay">チュートリアル</button>
+          </div>
         </div>
-      </div>
-      <p class="lead" style="margin-top:16px;font-size:12px">最高記録：第${b.phase || 0}期${b.phase >= PHASES ? '（完走）' : ''}${b.hiscore ? ` ・ ハイスコア ${fmt(b.hiscore)}` : ''} ・ 最高価値アイテム ${fmt(b.item || 0)} ・ 出勤回数 ${G.meta.runs}${b.lev ? ` ・ 最高レバレッジ Lv${b.lev}` : ''}</p>
-    `);
+        <p class="lead title-best">最高 第${b.phase || 0}期${b.phase > PHASES ? '（完走＋エンドレス）' : b.phase >= PHASES ? '（完走）' : ''}${b.hiscore ? ` ・ ハイスコア ${fmt(b.hiscore)}` : ''} ・ 最高価値 ${fmt(b.item || 0)} ・ 出勤 ${G.meta.runs}回</p>
+      </div>`, 'title');
   }
-  function showHowTo() {
+  // スマホの「今日の情報」（PCでは右の欄に出ている内容：ボス・特設マス・レバレッジ・ノルマ）
+  function showInfoSheet() {
+    const R = G.run;
+    if (!R || G.state !== 'build') return;
+    showOverlay(`
+      <h2>DAY ${R.day} の情報</h2>
+      ${dayInfoHTML(R)}
+      <div class="sheet-lev">${levOpen() && !R.hi ? leverageHTML(R).replace(/data-ui="lev-(up|down)"/g, 'data-act="sheet-lev-$1"') : ''}</div>
+      <div class="start-dock sheet">${phaseDockHTML(R)}</div>
+      <p class="lead" style="font-size:12px">納期の日より前にノルマを達成すると <b style="color:var(--good)">設置枠 +1</b>。設置枠はコインでも増やせます（次は ${runSlotCost()}枚）。</p>
+      <div class="menu-btns"><button class="btn" data-act="sheet-close">閉じる</button></div>`, 'sheet');
+  }
+  function showHowTo(fromPause) {
     showOverlay(`
       <h2>遊び方</h2>
       <p><b>1. 準備</b>：ショップで機械を買い、ベルトの<b>横のマス</b>に置く。アイテムが隣のベルトを通るたびに発動します。<br>
       2本のベルトに挟まれたマスは <b>2回</b>、角は <b>3回</b> 発動することも。</p>
       <p><b>ベルト型</b>：錬金釜・分裂ゲート・触媒槽などは<b>ベルトの上</b>に置きます。通ったアイテム1個につき<b>1回だけ</b>発動し、横の機械より先に効きます。ラインの<b>どこに置くか（前か後ろか）</b>で効き方が変わります。</p>
-      <p><b>2. 設置枠と手持ち</b>：盤面に置けるのは最初5台。コインで枠を増やせます（値段は2.5倍ずつ）。<br>
-      所持できるのは「設置枠 +2台」。置ききれない機械は手持ちで控えさせておけます。</p>
+      <p><b>2. 設置枠と手持ち</b>：盤面に置けるのは最初5台。<b>納期の日より前にノルマを達成</b>すると、前倒し達成ボーナスで <b>設置枠 +1</b>（納期の日ちょうどの達成はコインだけ）。コインでも増やせます（${SLOT_BASE}枚から ${SLOT_GROWTH}倍ずつ）。<br>
+      所持できるのは「設置枠 +${BENCH}台」。置ききれない機械は、右の <b>手持ち</b> で控えさせておけます。</p>
+      <p><b>ショップ</b>（画面の下）：カードにカーソルを合わせる（スマホはタップ）と説明が出ます。<b>「購入」</b> を押すと買えて、そのまま置く場所を選べます。盤面へドラッグして買うこともできます（PC）。<br>
+      🔒 で1枠だけ <b>取り置き</b>（リロールしても次の日も残る）。1日の最初の入荷では、どれか1枚が <b>特価（半額）</b> か <b>★改造済み</b> になります。
+      2日目からは <b>消耗品</b>（緑の券。その場で効く1回きりの品）もまざります。機械をショップの欄へドラッグすると売却できます。</p>
+      <p><b>青天井</b>：急冷槽・落雷塔・熟練工・金庫・換金機は、組み合わせ次第で倍率に上限がありません。発動すると、倍率が金色の札で大きく出ます。</p>
+      <p><b>日替わりチャレンジ</b>：その日だけの工場で、全員が同じ条件（ベルトの形・品ぞろえ・特設マス・ボス・日報ボーナス）。全員に <b>研究ポイント ${DAILY_RP}</b> が配られ、その日だけの研究を組んでから挑みます（ふだんの研究・特許は使わない）。その日はじめて遊ぶと特許がもらえ、日ごとのベストが記録に残ります。</p>
       <p><b>3. 稼働</b>：原料が流れ、機械が 変換 → 加算 → 乗算 → 特殊 の順に効果を出します。1日が終わると、基本の報酬と利息（5枚ごとに+1）がもらえます。</p>
       <p><b>4. 納期とノルマ</b>：ノルマは <b>期ごとの合計</b> です。納期は期が始まってから${PHASE_DAYS}日目（第1期は${PHASE_DAYS}日目）。その期の出荷額の合計がノルマに届いた日に <b>納期達成</b> となり、次の日から次の期が始まります。次の期の納期は、そこからまた${PHASE_DAYS}日目です。<br>
       早く達成すれば前倒しボーナスがもらえます。納期の日までに届かなければ解雇です。ノルマは大きく、期ごとの上がり幅も大きいので、盤面を育て続けましょう。<br>
       納期達成の報酬：コイン（期が進むほど多い）＋ 超過ボーナス（ノルマの2倍ごとに+1）＋ 前倒しボーナス（残り1日につき+${EARLY_COIN}）＋ 豪華な日報ボーナス。</p>
-      <p><b>5. 毎日変わるもの</b>：2日目からは盤面に<b>特設マス</b>が出ます（★強化マス＝置いた機械が2回発動、✕故障マス＝置いた機械が止まる）。日が終わるたびに<b>日報ボーナス</b>を3つから1つ選べます（改造キット・機械・設置枠・ノルマ減など）。4日ごとに<b>ボス日</b>（特殊ルール）。</p>
+      <p><b>5. 毎日変わるもの</b>：2日目からは盤面に<b>特設マス</b>が出ます（★強化マス＝置いた機械が2回発動、✕故障マス＝置いた機械が止まる）。日が終わるたびに<b>日報ボーナス</b>を3つから1つ選べます（改造キット・機械・ノルマ減など）。4日ごとに<b>ボス日</b>（特殊ルール）。</p>
       <p><b>組み合わせ</b>：1台では地味でも、組むと化ける機械がたくさんあります。説明文の「何に反応するか」に注目すると、機械どうしのつながりが見えてきます。自分だけの必勝パターンを見つけよう。</p>
       <p><b>素材ランク</b>：錬金釜（ベルト型）を1台通るごとに 石→銅→銀→金。出荷時に 銅×2 / 銀×4 / 金×8。</p>
       <p><b>完走とハイスコアモード</b>：ゴールは第${PHASES}期の納期。後の期ほどノルマが急に重くなり、研究なしではまず届きません。届かなかったランでも特許はたまるので、研究を進めて少しずつ遠くの期をめざします（後の期ほど、納期達成の特許も多い）。<br>
-      完走したら <b>ハイスコアモード</b>（${HISCORE_DAYS}日間）に挑めます。ノルマはなく、出荷した合計がハイスコアとして記録されます。</p>
+      完走したら、<b>エンドレス</b>（第${PHASES + 1}期から、ノルマがどんどん重くなる期をどこまで続けられるか）か、<b>ハイスコアモード</b>（${HISCORE_DAYS}日間、ノルマなしで出荷した合計を競う）に挑めます。</p>
       <p><b>レバレッジ</b>（第3期まで届くと使える）：期の最初の日に、「稼働開始」ボタンの上の ◀ ▶ で Lv を決められます。1つ上げるごとに <b>その期のノルマ×${LEV_QMUL}</b>、そのかわり <b>納期達成のコイン+50%・特許+50%</b>。</p>
       <p><b>強い機械には代償</b>：大型（設置枠を2つ使う）、維持費（毎日コインを払う）、コインを払う、アイテムが消える…など。強い組み合わせほど、そろえるのが難しくなっています。</p>
       <p><b>研究所</b>：特許で、機械ごとの <b>習熟</b> を1段ずつ進められます。習熟を最後まで進めると、その機械の <b>追加効果</b>（新しい働き）を研究できます。新しい機械の設計図もここで。</p>
-      <div class="menu-btns"><button class="btn sub" data-act="title">戻る</button></div>
+      <div class="menu-btns"><button class="btn sub" data-act="${fromPause ? 'back-pause' : 'title'}">戻る</button></div>
     `);
   }
   // ---------- 研究所 ----------
@@ -5539,7 +6916,7 @@ const UI = (() => {
     for (let k = 1; k <= MASTERY_MAX; k++) nodes.push({ label: k, on: l >= bp + k, cls: '', tip: `習熟 Lv${k}` });
     nodes.push({ label: '★', on: modOn(t), cls: 'mod', tip: `追加効果「${MACHINES[t].mod.name}」` });
     // 次に研究できる1段（段がまだ開いていない機械では光らせない）
-    const next = tierOpen(researchTabOf(t), RESEARCH_TIER[t]) || devOn() ? nodes.findIndex((n) => !n.on) : -1;
+    const next = tierOpen(researchTabOf(t), RESEARCH_TIER[t]) || (devOn() && !G.flat) ? nodes.findIndex((n) => !n.on) : -1;
     return `<div class="rtrack">${nodes.map((n, i) => `<i class="${n.cls} ${n.on ? 'on' : ''} ${i === next ? 'next' : ''}" title="${n.tip}">${n.label}</i>`).join('<s></s>')}</div>`;
   }
   // ボタン1つぶん（主ノード＝設計図/習熟、追加効果、経営・設備のノード）
@@ -5549,7 +6926,7 @@ const UI = (() => {
     const maxed = l >= r.max;
     const open = researchOpen(r);
     const cost = maxed ? 0 : r.cost(l);
-    const dev = devOn();
+    const dev = devOn() && !G.flat; // 日替わりの研究はテストモードでも配られたポイントで
     let title;
     let desc;
     if (r.kind === 'main') {
@@ -5582,8 +6959,8 @@ const UI = (() => {
       const short = req && rlv(req.id) < (r.reqLv || 1); // 前提がまだ足りない
       right = `<span class="rb-cost lock">🔒 ${!tierOpen(r.tab, r.tier) ? '段が未解放' : short ? (req.kind === 'main' ? `習熟 Lv${MASTERY_MAX} で解放` : '先に左') : '段が未解放'}</span>`;
     } else {
-      state = dev || G.meta.patents >= cost ? 'can' : 'poor';
-      right = `<span class="rb-cost">${dev ? '切替' : '特許 ' + cost}</span>`;
+      state = dev || resPoints() >= cost ? 'can' : 'poor';
+      right = `<span class="rb-cost">${dev ? '切替' : G.flat ? cost + 'pt' : '特許 ' + cost}</span>`;
     }
     return `<button class="rbtn ${r.kind} ${state} ${l > 0 ? 'has' : ''} ${dev ? 'dev' : ''}" data-research="${r.id}" ${state === 'can' || dev ? '' : 'disabled'}>
       <span class="rb-body"><span class="rb-t">${title}${lv}</span><span class="rb-d">${desc}</span></span>${right}</button>`;
@@ -5612,7 +6989,7 @@ const UI = (() => {
     const tabs = RESEARCH_TABS.map((t) => {
       const mine = RESEARCH.filter((r) => r.tab === t.id && isFinite(r.max));
       const got = mine.reduce((s, r) => s + Math.min(rlv(r.id), r.max), 0);
-      const can = !devOn() && RESEARCH.some((r) => r.tab === t.id && rlv(r.id) < r.max && researchOpen(r) && G.meta.patents >= r.cost(rlv(r.id)));
+      const can = (!devOn() || G.flat) && RESEARCH.some((r) => r.tab === t.id && rlv(r.id) < r.max && researchOpen(r) && resPoints() >= r.cost(rlv(r.id)));
       return `<button class="rtab ${resTab === t.id ? 'on' : ''}" data-act="res-tab" data-tab="${t.id}">${t.name}
         <span>${got} / ${mine.reduce((s, r) => s + r.max, 0)}</span>${can ? '<i class="dot"></i>' : ''}</button>`;
     }).join('');
@@ -5627,7 +7004,7 @@ const UI = (() => {
     } else {
       const prog = tabProgress(resTab);
       const cols = [1, 2, 3].map((tier) => {
-        const open = tierOpen(resTab, tier) || devOn();
+        const open = tierOpen(resTab, tier) || (devOn() && !G.flat);
         const need = TIER_NEED[tier];
         const types = Object.keys(RESEARCH_TIER).filter((t) => RESEARCH_TIER[t] === tier && researchTabOf(t) === resTab);
         const head = open
@@ -5638,8 +7015,22 @@ const UI = (() => {
       });
       body = `<p class="rhint">機械ごとに1本の道があります。<b>習熟</b> を1段ずつ進め（ショップに並びやすくなり、「+」「×」の機械は効果も +${Math.round(TUNE_STEP * 100)}%ずつ）、
         最後まで進めると <b style="color:#f7a8ff">★追加効果</b>（その機械に新しい働きが付く）を研究できます。
-        この分類で研究を進めるほど、右の段が開きます（今 <b>${prog}</b> 段階）。</p>
+        ${G.flat ? '日替わりの研究は、どの段からでも選べます。' : `この分類で研究を進めるほど、右の段が開きます（今 <b>${prog}</b> 段階）。`}</p>
         <div class="rgrid">${cols.join('<div class="rgrid-arrow">▶</div>')}</div>`;
+    }
+    // 日替わりチャレンジの研究：配られたポイントで、その日だけの研究を組んでから挑む
+    if (G.flat) {
+      const left = resPoints();
+      showOverlay(`
+        <div class="rhead daily-rhead"><h2>📅 日替わりの研究 <small>${dailyInfo().label}</small></h2>
+          <div class="patents">研究ポイント 残り <b>${left}</b> / ${DAILY_RP}</div>
+          <button class="btn sub small" data-act="daily-reset" ${left >= DAILY_RP ? 'disabled' : ''}>振り直す</button>
+          <button class="btn sub small" data-act="title">戻る</button>
+          <button class="btn small daily-go" data-act="daily-go">▶ この研究で挑む</button></div>
+        <p class="lead daily-lead">全員に同じ <b>${DAILY_RP}ポイント</b> が配られます。今日だけの研究です（ふだんの研究と特許は使いません）。設計図は全部そろっていて、どの段からでも選べます。決めた研究は、今日なら何回挑んでも使えます。</p>
+        <div class="rtabs">${tabs}</div>
+        ${body}`, 'wide');
+      return;
     }
     const refund = G.meta.researchRefund;
     if (refund != null) {
@@ -5714,105 +7105,97 @@ const UI = (() => {
     setTimeout(() => el.remove(), 4800);
   }
 
-  // 1日の終わりの画面。納期を達成した日は、納期達成の報酬と次の期の予告も出す
+  // 1日の終わりの画面（日報）。スクロールしないで見られるように、PCは左右2列（左：今日の結果／右：日報ボーナス）、スマホは1列で詰めて出す
+  // 納期を達成した日は、納期達成の報酬と次の期の予告も出す
   function showResult(firstWin) {
     const R = G.run;
     const rw = R.lastReward;
     const c = rw.clear;
     const recs = rw.records || [];
-    const nb = (k) => (recs.includes(k) ? ' <span class="rec-badge">自己ベスト更新</span>' : '');
-    const coinRows = [
-      [`今日の報酬${R.boss ? '（ボス日）' : ''}`, `+${rw.base}枚`],
-      ['利息', `+${rw.interest}枚`],
-    ];
-    if (rw.piggy) coinRows.push(['貯金箱', `+${rw.piggy}枚`]);
-    if (rw.cashback) coinRows.push(['換金機のキャッシュバック', `+${rw.cashback}枚`]);
+    const nb = (k) => (recs.includes(k) ? ' <span class="rec-badge">自己ベスト</span>' : '');
+    // コイン：合計を大きく、内訳は小さな札で
+    const parts = [[`今日の報酬${R.boss ? '（ボス日）' : ''}`, rw.base], ['利息', rw.interest]];
+    if (rw.piggy) parts.push(['貯金箱', rw.piggy]);
+    if (rw.cashback) parts.push(['キャッシュバック', rw.cashback]);
     if (c) {
-      coinRows.push([`<b style="color:var(--coin)">納期達成</b>（第${c.phase}期）`, `+${c.bonus}枚`]);
-      coinRows.push([`超過ボーナス（ノルマの ${ratioTxt(c.ratio)}）${nb('ratio')}`, `+${c.over}枚`]);
-      if (c.early) coinRows.push([`前倒しボーナス（納期の${c.daysLeft}日前）`, `+${c.early}枚`]);
-      if (rw.lev) coinRows.push([`レバレッジ Lv${rw.lev}（納期達成＋超過 +${Math.round((levCoinMul(rw.lev) - 1) * 100)}%）`, `+${c.levBonus}枚`]);
+      parts.push([`納期達成（第${c.phase}期）`, c.bonus, 'gold']);
+      if (c.over) parts.push([`超過 ${ratioTxt(c.ratio)}`, c.over, 'gold']);
+      if (c.early) parts.push([`前倒し（${c.daysLeft}日前）`, c.early, 'gold']);
+      if (c.levBonus) parts.push([`レバレッジ Lv${rw.lev}`, c.levBonus, 'gold']);
     }
-    const infoRows = [['最高価値アイテム' + nb('item'), fmt(R.dayStats.best)]];
-    if (recs.includes('dayScore')) infoRows.unshift(['1日の出荷額' + nb('dayScore'), fmt(R.dayScore)]);
-    if (c && recs.includes('lev')) infoRows.push(['レバレッジ' + nb('lev'), 'Lv' + rw.lev]);
-    const ptNote = c && rw.lev ? `レバレッジ +${Math.round((levPatentMul(rw.lev) - 1) * 100)}%` : '';
+    const coinTotal = rw.coinTotal != null ? rw.coinTotal : parts.reduce((s, p) => s + p[1], 0);
+    const coinBox = `<div class="coin-box anim" style="--d:.45s">
+        <div class="cb-top"><span class="cb-l">${c ? '納期達成までにもらったコイン' : '今日もらったコイン'}</span><b class="cb-v">+<span id="coin-up">0</span><small>枚</small></b><span class="cb-have">持ちコイン <b>${R.coins}</b>枚</span></div>
+        <div class="cb-parts">${parts.map(([n, v, k]) => `<span class="${k || ''}">${n} <b>+${v}</b></span>`).join('')}</div>
+        ${rw.runCoins ? `<div class="cb-run">このほか、稼働中に機械から <b>+${rw.runCoins}枚</b></div>` : ''}
+        ${c && c.slot ? `<div class="cb-slot">🎁 前倒し達成ボーナス：<b>設置枠 +1</b>（${R.boardCap}枠に）</div>` : ''}
+      </div>`;
+    // そのほかの数字（札を1行に並べる）
     const pts = rw.dayPts + (c ? c.pts : 0);
-    infoRows.push([`特許（${c ? '今日ぶん＋納期達成' : '今日ぶん'}${ptNote ? '・' + ptNote : ''}）`, `+${fmtMult(Math.round(pts * 100) / 100)}`]);
-    if (R.dayStats.maxCombo >= 5) infoRows.push(['最大連続出荷', R.dayStats.maxCombo + '連']);
-    const t0 = 0.8;
-    const step = 0.2;
-    const lines =
-      coinRows.map((r, i) => `<div class="result-line anim" style="--d:${t0 + i * step}s"><span>${r[0]}</span><span class="v">${r[1]}</span></div>`).join('') +
-      infoRows.map((r, i) => `<div class="result-line anim" style="--d:${t0 + (coinRows.length + i) * step}s"><span>${r[0]}</span><span class="v" style="color:var(--text)">${r[1]}</span></div>`).join('');
+    const chips = [`最高価値 <b>${fmt(R.dayStats.best)}</b>${nb('item')}`, `特許 <b>+${fmtMult(Math.round(pts * 100) / 100)}</b>${c && rw.lev ? `（レバレッジ +${Math.round((levPatentMul(rw.lev) - 1) * 100)}%）` : ''}`];
+    if (recs.includes('dayScore')) chips.unshift(`1日の出荷額 <b>${fmt(R.dayScore)}</b>${nb('dayScore')}`);
+    if (c && recs.includes('ratio')) chips.push(`超過倍率 <b>${ratioTxt(c.ratio)}</b>${nb('ratio')}`);
+    if (c && recs.includes('lev')) chips.push(`レバレッジ <b>Lv${rw.lev}</b>${nb('lev')}`);
+    if (R.dayStats.maxCombo >= 5) chips.push(`最大 <b>${R.dayStats.maxCombo}</b>連続出荷`);
+    const info = `<div class="res-chips anim" style="--d:.75s">${chips.map((t) => `<span>${t}</span>`).join('')}</div>`;
     // 今日の出荷額と、今の期の進み具合
     const prog = Math.min(1, R.phaseScore / R.quota);
     const note = c
-      ? `納期達成！${c.daysLeft > 0 ? `　納期の${c.daysLeft}日前なので、前倒しボーナスがもらえます` : ''}`
+      ? `納期達成！${c.daysLeft > 0 ? `　納期の${c.daysLeft}日前なので、前倒しボーナス（コイン＋<b>設置枠 +1</b>）` : '　納期の日の達成なので、設置枠は増えません（コインのみ）'}`
       : `あと <b>${fmt(rw.need)}</b>　／　納期まで あと${rw.daysLeft}日${rw.daysLeft === 1 ? '（明日が納期）' : ''}`;
     const big = `<div class="result-big good"><span class="rb-l">今日の出荷</span><span id="count-up">0</span></div>
       <div class="phase-prog ${c ? 'done' : ''}">
-        <div class="pp-row"><span>第${R.phase}期の合計</span><span><b>${fmt(R.phaseScore)}</b> / ${fmt(R.quota)}</span></div>
+        <div class="pp-row"><span>${R.endless ? 'エンドレス ' : ''}第${R.phase}期の合計</span><span><b>${fmt(R.phaseScore)}</b> / ${fmt(R.quota)}</span></div>
         <div class="pp-bar"><div style="width:${(prog * 100).toFixed(1)}%"></div></div>
         <div class="pp-note">${note}</div>
       </div>`;
     const tutNote = R.tut && R.day === 1
-      ? `<div class="tut-note"><b>これが1日の流れです。</b>ノルマは期ごとの合計で、納期（${PHASE_DAYS}日目）までに届けば次の期へ進みます。届かなかった日も、コインと日報ボーナスはもらえます。日報ボーナスを1つ選んで、次の日へ。</div>`
+      ? `<div class="tut-note"><b>これが1日の流れです。</b>ノルマは期ごとの合計で、納期（${PHASE_DAYS}日目）までに届けば次の期へ進みます。届かなかった日も、コインと日報ボーナスはもらえます。右の日報ボーナスを1つ選んで、次の日へ。</div>`
       : '';
-    if (firstWin) {
-      showOverlay(`
-        <h2 style="color:var(--coin)">🏆 第${PHASES}期の納期達成！ 完走です</h2>
-        ${big}
-        ${lines}
-        <div class="hi-invite">
-          <div class="t">このまま <b>ハイスコアモード</b> に挑めます</div>
-          <div class="d">ノルマなしの ${HISCORE_DAYS}日間で、出荷した合計がハイスコアになります（落ちることはありません）。${G.meta.best.hiscore ? `自己ベストは <b>${fmt(G.meta.best.hiscore)}</b>。` : ''}<br>
-          最後に、1兆を超えた桁の数だけ特許がもらえます。</div>
-        </div>
-        ${tipHTML()}
-        <div class="menu-btns">
-          <button class="btn" data-act="hiscore">ハイスコアモードに挑む（${HISCORE_DAYS}日間）</button>
-          <button class="btn sub" data-act="retire">ここで退職する（特許 +${patentsFor(R)}）</button>
-        </div>`);
+    let head;
+    let left = `${tutNote}${big}${coinBox}${info}`;
+    let right;
+    if (firstWin && R.daily) {
+      // 日替わりチャレンジは第6期の達成でおしまい（エンドレス・ハイスコアモードはない）
+      head = '<h2 style="color:var(--coin)">🏆 日替わりチャレンジ 完走！</h2>';
+      right = `<div class="hi-invite"><div class="t">全員と同じ条件で、第${PHASES}期まで完走しました</div><div class="d">結果の画面から、𝕏 へのポストや戦績カードの保存ができます。</div></div>
+        <div class="menu-btns"><button class="btn" data-act="retire">結果を見る</button></div>`;
+    } else if (firstWin) {
+      // 完走：このあとの遊び方を選ぶ（エンドレス／ハイスコアモード／退職）
+      const best = G.meta.best.hiscore || 0;
+      const nq = runQuota(PHASES + 1);
+      head = `<h2 style="color:var(--coin)">🏆 第${PHASES}期の納期達成！ 完走です</h2>`;
+      right = `<div class="mode-pick"><div class="mp-h">このあとの遊び方を選べます</div>
+          <button class="mode-btn endless" data-act="endless"><b>∞ エンドレスに挑む</b><span>第${PHASES + 1}期（ノルマ <b>${fmt(nq)}</b>）から、どこまで期を続けられるか。期ごとにノルマの伸びが大きくなります。届かなかったらそこで終わり（解雇にはなりません）。後の期ほど、納期達成の特許も多い。</span></button>
+          <button class="mode-btn hi" data-act="hiscore"><b>🏁 ハイスコアモード（${HISCORE_DAYS}日間）</b><span>ノルマなしの ${HISCORE_DAYS}日間で、出荷した合計がハイスコアになります。${best ? `自己ベストは <b>${fmt(best)}</b>。` : ''}最後に、1兆を超えた桁の数だけ特許。</span></button>
+          <button class="btn sub" data-act="retire">ここで退職する（特許 +${patentsFor(R)}）</button></div>`;
     } else if (R.hi) {
       // ハイスコアモードの1日の終わり
       const best = R.hi.best;
       const over = best > 0 && R.phaseScore > best;
-      const hiBig = `<div class="result-big good"><span class="rb-l">今日の出荷</span><span id="count-up">0</span></div>
+      left = `<div class="result-big good"><span class="rb-l">今日の出荷</span><span id="count-up">0</span></div>
         <div class="phase-prog ${over ? 'done' : ''}">
           <div class="pp-row"><span>ハイスコア（合計）</span><span><b>${fmt(R.phaseScore)}</b>${best > 0 ? ` / 自己ベスト ${fmt(best)}` : ''}</span></div>
           ${best > 0 ? `<div class="pp-bar"><div style="width:${(Math.min(1, R.phaseScore / best) * 100).toFixed(1)}%"></div></div>` : ''}
           <div class="pp-note">${R.hi.done ? (R.hi.newBest ? '🎉 ハイスコア 自己ベスト更新！' : 'ハイスコアモード終了') : over ? '自己ベストを超えています！' : `あと${rw.daysLeft}日`}</div>
-        </div>`;
+        </div>${coinBox}${info}`;
       if (R.hi.done) {
-        showOverlay(`
-          <h2 style="color:var(--coin)">🏁 ハイスコアモード終了</h2>
-          ${hiBig}
-          ${lines}
-          <div class="result-line anim" style="--d:1.6s"><span>ハイスコアの特許（1兆を超えた桁の数）</span><span class="v" style="color:var(--blue)">+${R.hi.bonus}</span></div>
-          ${tipHTML()}
-          <div class="menu-btns"><button class="btn" data-act="hi-finish">結果を見る</button></div>`);
+        head = '<h2 style="color:var(--coin)">🏁 ハイスコアモード終了</h2>';
+        right = `<div class="hi-invite"><div class="t">ハイスコアの特許（1兆を超えた桁の数）</div><div class="d" style="font-size:22px;font-weight:900;color:var(--blue)">+${R.hi.bonus}</div></div>
+          <div class="menu-btns"><button class="btn" data-act="hi-finish">結果を見る</button></div>`;
       } else {
-        showOverlay(`
-          <h2>ハイスコアモード DAY ${R.day}</h2>
-          ${hiBig}
-          ${lines}
-          ${nextDayHTML(R)}
-          ${tipHTML()}
-          ${rewardsHTML(R)}`);
+        head = `<h2>ハイスコアモード DAY ${R.day}</h2>`;
+        right = `${nextDayHTML(R)}${rewardsHTML(R)}`;
       }
     } else {
-      showOverlay(`
-        <h2 ${c ? 'style="color:var(--coin)"' : ''}>${c ? `🎉 第${c.phase}期 納期達成！` : `DAY ${R.day} 終了`}</h2>
-        ${tutNote}
-        ${big}
-        ${lines}
-        ${nextDayHTML(R)}
-        ${tipHTML()}
-        ${rewardsHTML(R)}`);
+      head = `<h2 ${c ? 'style="color:var(--coin)"' : ''}>${c ? `🎉 ${R.endless ? 'エンドレス ' : ''}第${c.phase}期 納期達成！` : `DAY ${R.day} 終了`}</h2>`;
+      right = `${nextDayHTML(R)}${rewardsHTML(R)}`;
     }
+    showOverlay(`${head}<div class="res-grid"><div class="res-l">${left}</div><div class="res-r">${right}${tipHTML('pc-only')}</div></div>`, 'result');
     countUp($('count-up'), R.dayScore, 0.7);
-    coinRows.forEach((_, i) => setTimeout(() => Sfx.coin(), (t0 + i * step) * 1000));
+    const cu = $('coin-up');
+    if (cu) setTimeout(() => countUp(cu, coinTotal, 0.5), 450);
+    for (let i = 0; i < Math.min(5, parts.length); i++) setTimeout(() => Sfx.coin(), 500 + i * 120);
   }
   // 日報ボーナス：1つ選ぶと次の日へ
   function rewardsHTML(R) {
@@ -5820,24 +7203,25 @@ const UI = (() => {
     const cards = R.rewards.map((rw, i) => {
       const t = rewardText(rw);
       const g = rw.id === 'machine' ? glyphHTML(rw.type) : `<div class="glyph reward-ico">${REWARD_ICON[rw.id] || '？'}</div>`;
-      return `<button class="reward" data-reward="${i}">${g}<div><div class="name">${t.t}</div><div class="desc">${t.d}</div></div></button>`;
+      return `<button class="reward anim" data-reward="${i}" style="--d:${0.9 + i * 0.12}s">${g}<div class="rw-body"><div class="name">${t.t}</div><div class="desc">${rw.id === 'machine' ? `<b>${MACHINES[rw.type].short}</b>　${MACHINES[rw.type].desc}` : t.d}</div></div><span class="rw-go">選ぶ ▶</span></button>`;
     }).join('');
     const big = R.rewards[0] && R.rewards[0].big;
-    return `<h3 class="reward-h">${big ? '🎁 納期達成の日報ボーナス（いつもより豪華）' : '📋 日報ボーナス'}：1つ選んで次の日へ</h3><div class="rewards">${cards}</div>`;
+    return `<h3 class="reward-h">${big ? '🎁 納期達成の日報ボーナス（豪華）' : '📋 日報ボーナス'}<span>1つ選ぶと次の日へ</span></h3><div class="rewards">${cards}</div>`;
   }
-  const REWARD_ICON = { coins: '¥', kit: '🔧', slot: '＋', patent: '特', quota: '↓', shop: '店', reroll: '↻' };
+  const REWARD_ICON = { coins: '¥', kit: '🔧', patent: '特', quota: '↓', shop: '店', reroll: '↻' };
 
   // 明日の予告（ボス日）と、納期を達成した日は次の期のノルマ
   function nextDayHTML(R) {
     const d = R.day + 1;
     const c = R.lastReward && R.lastReward.clear;
     const boss = (d % 4 === 0)
-      ? `<div class="boss" style="margin-top:12px"><div class="t">⚠ 明日はボス日</div><div class="d">特殊ルールは明日の準備画面で発表されます</div></div>`
+      ? '<div class="next-boss">⚠ <b>明日はボス日</b>（特殊ルールは明日の準備画面で発表）</div>'
       : '';
     if (!c) return boss;
     const p = R.phase + 1;
-    return `${boss}<p class="lead next-phase">次は <b>第${p}期</b>：ノルマ <b>${fmt(runQuota(p))}</b>（今の ${fmtMult(Math.round((runQuota(p) / R.quota) * 10) / 10)}倍）<br>
-      納期は DAY ${deadlineFrom(R.day + 1)}。明日から <b>${PHASE_DAYS}日</b> あります</p>`;
+    const nq = niceRound(runQuota(p) * Math.pow(LOAN_QMUL, R.loan || 0));
+    return `<div class="next-phase">次は <b>${R.endless ? 'エンドレス ' : ''}第${p}期</b>：ノルマ <b>${fmt(nq)}</b>（今の ${fmtMult(Math.round((nq / R.quota) * 10) / 10)}倍${R.loan ? `・前借り ${R.loan}回ぶん +${Math.round((Math.pow(LOAN_QMUL, R.loan) - 1) * 100)}%` : ''}）<br>
+      納期は DAY ${deadlineFrom(R.day + 1)}。明日から <b>${PHASE_DAYS}日</b> あります</div>${boss}`;
   }
   // 研究所へのボタン。研究できるものがあれば、光って目立つ大きなボタンになる
   function researchBtnHTML(label, big) {
@@ -5859,33 +7243,67 @@ const UI = (() => {
     }
     return isFinite(min) && min > G.meta.patents ? min - G.meta.patents : 0;
   }
+  let lastReason = '';
+  // ランの終わりの画面。PCは左右2列（左：結果と特許／右：シェアと次の行動）にして、スクロールしないで見られるようにする
   function showGameOver(gained, reason) {
     const R = G.run;
+    lastReason = reason;
     const failed = reason === 'fail';
     const hiDone = reason === 'hiscore';
-    const title = failed ? '納期に間に合わず…解雇されました' : hiDone ? '🏁 ハイスコアモード終了' : reason === 'retire' ? '円満退職！' : 'このランを終了しました';
+    const endless = reason === 'endless';
+    const title = R.daily
+      ? (R.victory ? '🏆 日替わりチャレンジ 完走！' : failed ? '日替わりチャレンジ：納期に間に合わず…' : '日替わりチャレンジ 終了')
+      : failed ? '納期に間に合わず…解雇されました' : endless ? '∞ エンドレス終了' : hiDone ? '🏁 ハイスコアモード終了' : reason === 'retire' ? '円満退職！' : 'このランを終了しました';
     const canResearch = researchAvail() > 0;
-    showOverlay(`
-      <h2 style="color:${failed ? 'var(--bad)' : 'var(--coin)'}">${title}</h2>
-      ${failed ? `<div class="result-big bad"><span class="rb-l">第${R.phase}期の合計</span>${fmt(R.phaseScore)} <span style="font-size:18px;color:var(--muted)">/ ${fmt(R.quota)}</span></div>` : ''}
-      ${hiDone ? `<div class="result-big good"><span class="rb-l">ハイスコア</span>${fmt(R.hi.total || 0)}${R.hi.newBest ? ' <span class="rec-badge">自己ベスト更新</span>' : ''}</div>` : ''}
+    const short = failed || endless ? Math.max(0, R.quota - R.phaseScore) : 0;
+    const dd = R.daily;
+    const drec = dd && G.meta.daily[dd.key];
+    const dailyBox = dd
+      ? `<div class="daily-box">
+          <div class="t">📅 日替わりチャレンジ ${dd.label}${dd.newBest ? ' <span class="rec-badge">今日のベスト更新</span>' : ''}</div>
+          <div class="d">今日のベスト：第${drec.phases}期・総出荷 ${fmt(drec.total)}（${drec.plays}回目）${dd.gotBonus ? ` ・ 今日はじめてのプレイ：特許 <b>+${dd.gotBonus}</b>` : ' ・ 日替わりの特許は受け取り済み'}</div>
+        </div>`
+      : '';
+    let bigBox = '';
+    if (failed) {
+      bigBox = `<div class="result-big bad"><span class="rb-l">第${R.phase}期の合計</span>${fmt(R.phaseScore)} <span class="rb-q">/ ${fmt(R.quota)}</span></div>
+        <p class="lead miss-line">ノルマまで あと <b>${fmt(short)}</b> 足りなかった…！</p>`;
+    } else if (endless) {
+      bigBox = `<div class="result-big good"><span class="rb-l">エンドレス</span>第${R.stats.phasesCleared}期まで達成</div>
+        <p class="lead miss-line">第${R.phase}期のノルマまで あと <b>${fmt(short)}</b>（${fmt(R.phaseScore)} / ${fmt(R.quota)}）</p>`;
+    } else if (hiDone) {
+      bigBox = `<div class="result-big good"><span class="rb-l">ハイスコア</span>${fmt(R.hi.total || 0)}${R.hi.newBest ? ' <span class="rec-badge">自己ベスト更新</span>' : ''}</div>`;
+    }
+    // 共有カードの画像を端末のシェア機能で送れるか（スマホなど）
+    let canShareImg = false;
+    try { canShareImg = !!(navigator.canShare && navigator.canShare({ files: [new File([new Blob([''])], 'a.png', { type: 'image/png' })] })); } catch (err) { canShareImg = false; }
+    const ph = R.stats.phasesCleared;
+    const left = `${bigBox}${dailyBox}
       <div class="patent-gain">
         <span class="pg-l">獲得した特許${R.stats.levSum ? `（レバレッジ合計 ${R.stats.levSum}）` : ''}</span>
         <span class="pg-v">+<span id="patent-up">0</span></span>
         <span class="pg-s">特許の合計 <b>${G.meta.patents}</b></span>
       </div>
-      <div class="result-line"><span>達成した納期</span><span class="v" style="color:var(--text)">第${R.stats.phasesCleared}期まで（${R.stats.days}日）${R.stats.phasesCleared >= PHASES ? ' ・ 完走' : ` ・ ゴールの第${PHASES}期まで あと${PHASES - R.stats.phasesCleared}期`}</span></div>
-      <div class="result-line"><span>最高価値アイテム</span><span class="v" style="color:var(--text)">${fmt(R.stats.bestItem)}</span></div>
-      <div class="result-line"><span>総出荷額</span><span class="v" style="color:var(--text)">${fmt(R.stats.totalShipped)}</span></div>
+      <div class="over-stats">
+        <div><span>達成した納期</span><b>第${ph}期まで（${R.stats.days}日）</b><em>${ph > PHASES ? '完走＋エンドレス' : ph >= PHASES ? '完走' : `ゴールの第${PHASES}期まで あと${PHASES - ph}期`}</em></div>
+        <div><span>最高価値アイテム</span><b>${fmt(R.stats.bestItem)}</b></div>
+        <div><span>総出荷額</span><b>${fmt(R.stats.totalShipped)}</b></div>
+        ${R.stats.earlySlots ? `<div><span>前倒し達成でふえた設置枠</span><b style="color:var(--good)">+${R.stats.earlySlots}</b></div>` : ''}
+      </div>
       ${R.newRecords && R.newRecords.length ? `<p class="lead rec-line">🎉 自己ベスト更新：${R.newRecords.map((k) => RECORD_NAMES[k]).join('・')}</p>` : ''}
-      ${R.newAch && R.newAch.length ? `<p class="lead" style="color:var(--coin);font-weight:900">🏆 このランで解除した実績：${R.newAch.map((id) => ACHIEVEMENTS.find((a) => a.id === id).name).join('・')}</p>` : ''}
-      ${canResearch ? `<p class="lead go-hint">特許がたまりました。研究で機械を育てると、もっと先の期に届きます</p>` : ''}
+      ${R.newAch && R.newAch.length ? `<p class="lead ach-line">🏆 解除した実績：${R.newAch.map((id) => ACHIEVEMENTS.find((a) => a.id === id).name).join('・')}</p>` : ''}`;
+    const right = `<div class="share-row">
+        <button class="btn x-btn" data-act="post-x">𝕏 で結果をポスト</button>
+        <button class="btn sub" data-act="save-card">🖼 戦績カードを保存（PNG）</button>
+        ${canShareImg ? '<button class="btn sub" data-act="share-card">📤 戦績カードをシェア</button>' : ''}
+      </div>
+      ${canResearch ? '<p class="lead go-hint">特許がたまりました。研究で機械を育てると、もっと先の期に届きます</p>' : ''}
       <div class="menu-btns over-btns">
         ${canResearch ? researchBtnHTML('研究所', true) : ''}
-        <button class="btn ${canResearch ? 'sub again' : ''}" data-act="new">▶ もう一度出勤する</button>
+        <button class="btn ${canResearch ? 'sub again' : ''}" data-act="${dd ? 'daily' : 'new'}">▶ ${dd ? 'もう一度 日替わりに挑む' : 'もう一度出勤する'}</button>
         ${canResearch ? '' : researchBtnHTML('研究所')}
         <div class="btn-row">
-          <button class="btn sub" data-act="trophies">🏆 実績 ${achCount()} / ${ACHIEVEMENTS.length}</button>
+          <button class="btn sub" data-act="trophies">🏆 実績 ${achCount()}/${ACHIEVEMENTS.length}</button>
           <button class="btn sub" data-act="records">📈 記録</button>
         </div>
         <div class="btn-row">
@@ -5893,20 +7311,206 @@ const UI = (() => {
           <button class="btn sub" data-act="title">タイトルへ</button>
         </div>
       </div>
-      ${tipHTML()}`);
+      ${tipHTML('pc-only')}`;
+    showOverlay(`<h2 style="color:${failed ? 'var(--bad)' : 'var(--coin)'}">${title}</h2><div class="res-grid over"><div class="res-l">${left}</div><div class="res-r">${right}</div></div>`, 'result');
     const el = $('patent-up');
     if (el) countUp(el, gained, 0.9);
   }
 
+  // ---------- 結果のシェア（X へのポスト・戦績カードの画像） ----------
+  // 公開しているページのアドレス（自分のパソコンで開いているときは公開先のアドレス）
+  function pageUrl() {
+    const l = window.location;
+    if (/^https?:$/.test(l.protocol) && !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(l.hostname)) return l.origin + l.pathname;
+    return GAME_URL;
+  }
+  function modeLabel(R) {
+    return R.daily ? `【日替わり ${R.daily.label}】` : '【通常】';
+  }
+  function resultHead(R) {
+    const ph = R.stats.phasesCleared;
+    if (R.endless) return `完走＋エンドレス 第${ph}期まで！（${R.stats.days}日）`;
+    if (R.victory) return `第${PHASES}期まで完走！（${R.stats.days}日）`;
+    if (ph > 0) return `第${ph}期まで達成（${R.stats.days}日）`;
+    return `第1期で力尽きた…（${R.stats.days}日）`;
+  }
+  function postText(R) {
+    const lines = [`コンベア錬金 ${modeLabel(R)}`, resultHead(R), `最高アイテム価値 ${fmt(R.stats.bestItem)}`];
+    if (R.hi && R.hi.done) lines.push(`ハイスコア ${fmt(R.hi.total || 0)}`);
+    if (lastReason === 'fail' || lastReason === 'endless') lines.push(`ノルマまであと${fmt(Math.max(0, R.quota - R.phaseScore))}足りなかった…！`);
+    lines.push('#コンベア錬金', pageUrl());
+    return lines.join('\n');
+  }
+  function postToX() {
+    const R = G.run;
+    if (!R) return;
+    const url = 'https://x.com/intent/tweet?text=' + encodeURIComponent(postText(R));
+    window.open(url, '_blank', 'noopener');
+  }
+  // 戦績カード（1200×630）：タイトル・モード・結果・最高価値・最後の盤面のミニチュア・使った機械
+  function makeResultCard(R) {
+    const W2 = 1200;
+    const H2 = 630;
+    const cv = document.createElement('canvas');
+    cv.width = W2;
+    cv.height = H2;
+    const c = cv.getContext('2d');
+    const F = '"M PLUS 1p", "Yu Gothic UI", "Meiryo", sans-serif';
+    const bg = c.createLinearGradient(0, 0, W2, H2);
+    bg.addColorStop(0, '#1c1f2b');
+    bg.addColorStop(1, '#0e1015');
+    c.fillStyle = bg;
+    c.fillRect(0, 0, W2, H2);
+    c.strokeStyle = '#ffd44766';
+    c.lineWidth = 4;
+    c.strokeRect(14, 14, W2 - 28, H2 - 28);
+    const pill = (x, y, text, fill, color) => {
+      c.font = `900 26px ${F}`;
+      const w = c.measureText(text).width + 32;
+      c.fillStyle = fill;
+      c.beginPath();
+      c.roundRect ? c.roundRect(x, y, w, 44, 22) : c.rect(x, y, w, 44);
+      c.fill();
+      c.fillStyle = color;
+      c.textBaseline = 'middle';
+      c.fillText(text, x + 16, y + 23);
+      c.textBaseline = 'alphabetic';
+    };
+    // タイトル
+    c.font = `72px "DotGothic16", ${F}`;
+    c.fillStyle = '#ffd447';
+    c.shadowColor = '#7a3b00';
+    c.shadowOffsetY = 5;
+    c.fillText('コンベア錬金', 56, 112);
+    c.shadowColor = 'transparent';
+    c.shadowOffsetY = 0;
+    pill(60, 140, R.daily ? `日替わり ${R.daily.label}` : '通常モード', R.daily ? '#3b6dff' : '#2a2f3c', '#ffffff');
+    // 結果
+    c.fillStyle = R.victory ? '#ffd447' : '#e8ecf3';
+    c.font = `900 54px ${F}`;
+    c.fillText(R.endless ? `∞ エンドレス 第${R.stats.phasesCleared}期まで` : R.victory ? `🏆 第${PHASES}期まで完走！` : R.stats.phasesCleared > 0 ? `第${R.stats.phasesCleared}期まで達成` : '第1期で力尽きた…', 60, 266);
+    c.font = `500 26px ${F}`;
+    c.fillStyle = '#8b93a5';
+    c.fillText(`${R.stats.days}日 ・ ${R.layout.name}`, 62, 306);
+    c.fillText('最高アイテム価値', 62, 372);
+    c.font = `900 60px ${F}`;
+    c.fillStyle = '#7fd6ff';
+    c.fillText(fmt(R.stats.bestItem), 60, 436);
+    c.font = `700 28px ${F}`;
+    c.fillStyle = '#e8ecf3';
+    c.fillText(`総出荷額 ${fmt(R.stats.totalShipped)}`, 62, 486);
+    if (R.hi && R.hi.done) c.fillText(`ハイスコア ${fmt(R.hi.total || 0)}`, 62, 526);
+    else if (lastReason === 'fail' || lastReason === 'endless') {
+      c.fillStyle = '#ff8f8f';
+      c.fillText(`ノルマまであと ${fmt(Math.max(0, R.quota - R.phaseScore))} 足りなかった…！`, 62, 526);
+    }
+    c.font = `700 22px ${F}`;
+    c.fillStyle = '#8b93a5';
+    c.fillText(`#コンベア錬金　${pageUrl()}`, 62, 590);
+    // 最後の盤面のミニチュア
+    const T = 30;
+    const bx = W2 - 60 - COLS * T;
+    const by = 70;
+    c.fillStyle = '#12141a';
+    c.fillRect(bx - 8, by - 8, COLS * T + 16, ROWS * T + 16);
+    c.strokeStyle = '#2a2f3c';
+    c.lineWidth = 2;
+    c.strokeRect(bx - 8, by - 8, COLS * T + 16, ROWS * T + 16);
+    const P = R.path;
+    c.strokeStyle = '#353b4e';
+    c.lineWidth = T * 0.62;
+    c.lineJoin = 'round';
+    c.beginPath();
+    P.forEach(([x, y], i) => (i ? c.lineTo : c.moveTo).call(c, bx + (x + 0.5) * T, by + (y + 0.5) * T));
+    c.stroke();
+    c.fillStyle = '#5a6378';
+    c.fillRect(bx + P[0][0] * T + 4, by + P[0][1] * T + 4, T - 8, T - 8);
+    c.fillStyle = '#ffb347';
+    const e = P[P.length - 1];
+    c.fillRect(bx + e[0] * T + 4, by + e[1] * T + 4, T - 8, T - 8);
+    c.imageSmoothingEnabled = false;
+    const ms = placedMachines();
+    for (const m of ms) {
+      const cs = cellsOf(m);
+      const x0 = Math.min(...cs.map((q) => q[0]));
+      const y0 = Math.min(...cs.map((q) => q[1]));
+      const w = (Math.max(...cs.map((q) => q[0])) - x0 + 1) * T;
+      const h = (Math.max(...cs.map((q) => q[1])) - y0 + 1) * T;
+      c.fillStyle = MACHINES[m.type].color + '55';
+      c.fillRect(bx + x0 * T + 2, by + y0 * T + 2, w - 4, h - 4);
+      const s = T - 4;
+      c.drawImage(Sprites.canvas(m.type), bx + x0 * T + (w - s) / 2, by + y0 * T + (h - s) / 2, s, s);
+    }
+    // 使った機械
+    const n = {};
+    for (const m of ms) n[m.type] = (n[m.type] || 0) + 1;
+    const list = Object.entries(n).sort((a, b) => b[1] - a[1]).slice(0, 14);
+    const ly = by + ROWS * T + 40;
+    c.font = `700 20px ${F}`;
+    c.fillStyle = '#8b93a5';
+    c.fillText(list.length ? '使った機械' : '盤面に機械なし', bx - 4, ly);
+    list.forEach(([t, k], i) => {
+      const col = i % 7;
+      const row = Math.floor(i / 7);
+      const x = bx - 4 + col * 56;
+      const y = ly + 14 + row * 62;
+      c.fillStyle = '#1e222c';
+      c.fillRect(x, y, 48, 48);
+      c.drawImage(Sprites.canvas(t), x + 4, y + 4, 40, 40);
+      if (k > 1) {
+        c.font = `900 16px ${F}`;
+        c.fillStyle = '#ffd447';
+        c.fillText('×' + k, x + 26, y + 46);
+      }
+    });
+    return cv;
+  }
+  function cardFileName(R) {
+    const d = new Date();
+    const p = (v) => String(v).padStart(2, '0');
+    return `conveyor-alchemy-${R.daily ? 'daily-' + R.daily.key : `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`}.png`;
+  }
+  function cardBlob(R) {
+    return new Promise((res) => makeResultCard(R).toBlob((b) => res(b), 'image/png'));
+  }
+  async function saveCard(btn) {
+    const R = G.run;
+    if (!R) return;
+    const blob = await cardBlob(R);
+    if (!blob) return;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = cardFileName(R);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    if (btn) {
+      const old = btn.textContent;
+      btn.textContent = '保存しました';
+      setTimeout(() => (btn.textContent = old), 1600);
+    }
+  }
+  async function shareCard() {
+    const R = G.run;
+    if (!R) return;
+    const blob = await cardBlob(R);
+    if (!blob) return;
+    const file = new File([blob], cardFileName(R), { type: 'image/png' });
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], text: postText(R) });
+    } catch (err) { /* シェアを閉じたとき */ }
+  }
+
   // ---------- ヒント（日の終わりの画面） ----------
   let lastTip = -1;
-  function tipHTML() {
+  function tipHTML(cls = '') {
     // レバレッジがまだ使えないうち（はじめて完走する前）は、レバレッジの話は出さない
     const pool = TIPS.map((t, i) => i).filter((i) => levOpen() || !TIPS[i].includes('レバレッジ'));
     let i = pool[Math.floor(Math.random() * pool.length)];
     if (i === lastTip) i = pool[(pool.indexOf(i) + 1) % pool.length];
     lastTip = i;
-    return `<div class="tipbox"><b>💡 ヒント</b><span>${TIPS[i]}</span></div>`;
+    return `<div class="tipbox ${cls}"><b>💡 ヒント</b><span>${TIPS[i]}</span></div>`;
   }
 
   // ---------- 記録（自己ベストと最近のラン） ----------
@@ -5914,8 +7518,10 @@ const UI = (() => {
   const fmtDate = (t) => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
   const ratioTxt = (r) => '×' + (r >= 1000 ? fmt(r) : (r || 0).toFixed(1));
   function runResult(h) {
+    if (h.daily) return `【日替わり ${h.daily}】${h.win ? '完走' : `第${h.phases}期まで`}`;
     // 納期制になってからのラン（phases がある）
     if (h.phases != null) {
+      if (h.win && h.endless) return `完走＋エンドレス 第${h.phases}期`;
       if (h.win && h.hi != null) return `完走＋ハイスコア ${fmt(h.hi)}`;
       if (h.win && h.phases > PHASES) return `完走＋エンドレス 第${h.phases}期（前のルール）`;
       if (h.win) return `完走（${h.days}日）`;
@@ -5991,6 +7597,16 @@ const UI = (() => {
           <div class="hist-board" title="${boardSummary(h.board)}">${h.board.map((t) => glyphHTML(t, 'mini')).join('')}</div>
         </div>`).join('')
       : '<p class="lead">まだ記録がありません。出勤すると、ここに最近のランが残ります。</p>';
+    const dkeys = Object.keys(G.meta.daily || {}).sort().reverse().slice(0, 7);
+    const daily = dkeys.length
+      ? `<h3 class="rs-cat">日替わりチャレンジ <span style="color:var(--muted);font-size:12px">日ごとのベスト（最近の7日）</span></h3>
+        <div class="hist">${dkeys.map((k) => {
+          const r = G.meta.daily[k];
+          return `<div class="hist-row daily ${r.win ? 'win' : ''}"><div class="hist-when">${k.slice(0, 4)}/${k.slice(4, 6)}/${k.slice(6)}<span>${r.plays}回</span></div>
+            <div class="hist-res">${r.win ? '完走' : `第${r.phases}期まで`}</div>
+            <div class="hist-num"><span>総出荷</span>${fmt(r.total)}</div><div class="hist-num"><span>最高アイテム</span>${fmt(r.item || 0)}</div><div class="hist-num"><span>日替わり特許</span>+${r.got || 0}</div><div></div></div>`;
+        }).join('')}</div>`
+      : '';
     showOverlay(`
       <h2>記録</h2>
       <h3 class="rs-cat">自己ベスト</h3>
@@ -5998,6 +7614,7 @@ const UI = (() => {
       ${devOn() ? '<p class="lead" style="font-size:12px;color:#ff8f8f">🛠 テストモード中のランは、自己ベストに数えません（履歴には 🛠 付きで残ります）</p>' : ''}
       <h3 class="rs-cat">最近のラン <span style="color:var(--muted);font-size:12px">最新 ${HISTORY_MAX} 回まで</span></h3>
       <div class="hist">${rows}</div>
+      ${daily}
       <div class="menu-btns">
         <button class="btn sub" data-act="copy-best">自己ベストをコピー</button>
         <button class="btn sub" data-act="title">戻る</button>
@@ -6010,6 +7627,8 @@ const UI = (() => {
       <h2>一時停止</h2>
       <div class="menu-btns">
         <button class="btn" data-act="resume">続ける</button>
+        <button class="btn sub" data-act="mute">サウンド：${Sfx.muted ? 'オフ' : 'オン'}</button>
+        <button class="btn sub" data-act="howto-pause">遊び方</button>
         <button class="btn sub danger" data-act="quit">このランをやめる（特許 +${patentsFor(R)}）</button>
       </div>`);
   }
@@ -6058,7 +7677,7 @@ const UI = (() => {
       // カードのボタンを押したら、その場で研究する。テストモードでは Lv を1つ上げる（最大の次は0）
       const scroll = card.scrollTop;
       const r = RESEARCH.find((x) => x.id === btn.dataset.research);
-      if (devOn()) {
+      if (devOn() && !G.flat) {
         const max = isFinite(r.max) ? r.max : 5;
         devSetResearch(r.id, rlv(r.id) >= max ? 0 : rlv(r.id) + 1);
       } else if (buyResearch(r.id)) Sfx.buy();
@@ -6078,6 +7697,57 @@ const UI = (() => {
     }
     const prev = G.state;
     switch (btn.dataset.act) {
+      case 'daily':
+        // 日替わりチャレンジ：まず、配られた研究ポイントでその日の研究を組む
+        if (G.state === 'over') showTitleSilently();
+        G.flat = true;
+        dailyRes();
+        if (resTab === 'gen' || !RESEARCH_TABS.some((t) => t.id === resTab)) resTab = 'work';
+        showResearch();
+        card.scrollTop = 0;
+        break;
+      case 'daily-reset':
+        resetDailyRes();
+        showResearch();
+        break;
+      case 'daily-go':
+        hideOverlay();
+        newRun({ daily: true });
+        banner(`日替わり ${G.run.daily.label}`);
+        break;
+      case 'endless':
+        // 完走したあと：エンドレスを始める（明日から第7期）
+        startEndless();
+        hideOverlay();
+        nextDay();
+        banner(`エンドレス 第${G.run.phase}期`);
+        break;
+      case 'post-x':
+        postToX();
+        break;
+      case 'save-card':
+        saveCard(btn);
+        break;
+      case 'share-card':
+        shareCard();
+        break;
+      case 'sheet-close':
+        hideOverlay();
+        break;
+      case 'sheet-lev-up':
+      case 'sheet-lev-down':
+        setLeverage((G.run.lev || 0) + (btn.dataset.act === 'sheet-lev-up' ? 1 : -1));
+        showInfoSheet();
+        break;
+      case 'mute': {
+        const m = Sfx.toggle();
+        $('btn-mute').textContent = m ? '×' : '♪';
+        showPause();
+        break;
+      }
+      case 'howto-pause':
+        showHowTo(true);
+        break;
       case 'new':
         // はじめての人には、先にチュートリアルの説明を出す
         if (tutPending()) {
@@ -6148,6 +7818,9 @@ const UI = (() => {
         hideOverlay();
         endRun('retire');
         break;
+      case 'back-pause':
+        showPause();
+        break;
       case 'resume':
         hideOverlay();
         G.state = G.pausedFrom || 'build';
@@ -6162,90 +7835,181 @@ const UI = (() => {
   }
   function showTitleSilently() {
     G.state = 'title';
-    G.run = null;
-    G.items = [];
+    startDemo();
     G.dirty = true;
   }
 
-  function onSideClick(e) {
+  // 買ったあとの知らせ（音・バナー）
+  function buyFx(res, s) {
+    if (res === 'ok') {
+      Sfx.buy();
+      return true;
+    }
+    if (res === 'used') {
+      Sfx.item();
+      banner(CONSUMABLES[s.item].name);
+      return true;
+    }
+    Sfx.error();
+    if (res === 'cap') banner('手持ちがいっぱい（売るか、入れ替えてから）', 'bad');
+    else if (res === 'coins') banner('コイン不足', 'bad');
+    return false;
+  }
+  function buyAt(i) {
     const R = G.run;
-    if (!R || G.state !== 'build') return;
+    const s = R.shop[i];
+    if (!s || s.sold) return;
+    shopSel = null;
+    infoKey = '';
+    buyFx(buyShop(i), s);
+  }
+  // 右の欄・ショップ・詳細バー・スマホの下の段のボタン
+  function onPanelClick(e) {
+    const R = G.run;
+    if (!R || R.demo) return;
     Sfx.unlock();
-    const shopBtn = e.target.closest('[data-shop]');
-    if (shopBtn) {
-      const res = buyShop(+shopBtn.dataset.shop);
-      if (res === 'ok') Sfx.buy();
-      else {
-        Sfx.error();
-        if (res === 'cap') banner('所持の上限です', true);
-        else if (res === 'coins') banner('コイン不足', true);
-      }
+    const ui = e.target.closest('[data-ui]');
+    const act = ui && !ui.disabled ? ui.dataset.ui : null;
+    if (act === 'speed') {
+      setSpeed(+ui.dataset.speed);
+      G.dirty = true;
+      return;
+    }
+    if (G.state !== 'build') return;
+    const lockBtn = e.target.closest('[data-lock]');
+    if (lockBtn) {
+      if (toggleLock(+lockBtn.dataset.lock)) Sfx.click();
+      return;
+    }
+    // 「購入」ボタン：買って、そのまま置く場所を選ぶ
+    const buyBtn = e.target.closest('[data-buy]');
+    if (buyBtn) {
+      if (!buyBtn.disabled) buyAt(+buyBtn.dataset.buy);
+      else Sfx.error();
+      return;
+    }
+    // カードの本体：説明を出す（もう一度押すと閉じる）。買うのは「購入」ボタンだけ
+    const shopEl = e.target.closest('[data-shop]');
+    if (shopEl) {
+      const i = +shopEl.dataset.shop;
+      if (!R.shop[i] || R.shop[i].sold) return;
+      shopSel = shopSel === i ? null : i;
+      R.sel = null;
+      Sfx.click();
+      G.dirty = true;
       return;
     }
     const trayEl = e.target.closest('[data-tray]');
     if (trayEl) {
       const uid = +trayEl.dataset.tray;
       R.sel = R.sel === uid ? null : uid;
+      shopSel = null;
       Sfx.click();
       G.dirty = true;
       return;
     }
-    const id = e.target.closest('button') && e.target.closest('button').id;
-    if (id === 'btn-shop-fold') {
-      shopClosed = !shopClosed;
-      try { localStorage.setItem(UI_KEY, JSON.stringify({ shopClosed })); } catch (err) { /* 保存できなくても動く */ }
-      Sfx.click();
-      G.dirty = true;
-    } else if (id === 'btn-reroll') {
-      if (reroll()) Sfx.buy();
-      else Sfx.error();
-    } else if (id === 'btn-slot') {
-      if (buySlot()) {
-        Sfx.milestone(1);
-        banner(`設置枠 ${G.run.boardCap}台に！`);
-      } else Sfx.error();
-    } else if (id === 'btn-start') {
-      doStart();
-    } else if (id === 'btn-lev-up' || id === 'btn-lev-down') {
-      setLeverage((R.lev || 0) + (id === 'btn-lev-up' ? 1 : -1));
-      Sfx.click();
-    } else if (id === 'btn-unsel') {
-      R.sel = null;
-      G.dirty = true;
-    } else if (id === 'btn-sell') {
-      if (sellSelected()) Sfx.coin();
-    } else if (id === 'btn-stash') {
-      stashSelected();
-      Sfx.click();
-    } else if (id === 'btn-rot') {
-      if (rotateMachine(R.sel)) Sfx.click();
-      else {
-        Sfx.error();
-        banner('回すとはみ出すか、ほかの機械と重なります', 'bad');
-      }
-      infoKey = '';
-    } else if (id === 'btn-kit') {
-      if (applyKit(R.sel)) {
-        Sfx.milestone(2);
-        const f = findMachine(R.sel);
-        banner(`${MACHINES[f.m.type].name} ★${f.m.star}`);
-        if (f.where === 'grid') {
-          const { x: cx, y: cy } = machineCenter(f.m);
-          burst(cx, cy, '#ffd447', 24);
-          addRing(cx, cy, '#ffd447', 2);
-          f.m.flash = 1;
+    switch (act) {
+      case 'reroll':
+        if (reroll()) Sfx.buy();
+        else Sfx.error();
+        break;
+      case 'slot':
+        if (buySlot()) {
+          Sfx.milestone(1);
+          banner(`設置枠 ${R.boardCap}台に！`);
+        } else Sfx.error();
+        break;
+      case 'start':
+        doStart();
+        break;
+      case 'info':
+        Sfx.click();
+        showInfoSheet();
+        break;
+      case 'lev-up':
+      case 'lev-down':
+        setLeverage((R.lev || 0) + (act === 'lev-up' ? 1 : -1));
+        Sfx.click();
+        break;
+      case 'unsel':
+        R.sel = null;
+        G.dirty = true;
+        break;
+      case 'unpick':
+        shopSel = null;
+        G.dirty = true;
+        break;
+      case 'sell':
+        if (sellSelected()) Sfx.sell();
+        break;
+      case 'stash':
+        stashSelected();
+        Sfx.click();
+        break;
+      case 'rot':
+        if (rotateMachine(R.sel)) Sfx.click();
+        else {
+          Sfx.error();
+          banner('回すとはみ出すか、ほかの機械と重なります', 'bad');
         }
         infoKey = '';
-      } else Sfx.error();
+        break;
+      case 'kit':
+        if (applyKit(R.sel)) {
+          Sfx.milestone(2);
+          const f = findMachine(R.sel);
+          banner(`${MACHINES[f.m.type].name} ★${f.m.star}`);
+          if (f.where === 'grid') {
+            const { x: cx, y: cy } = machineCenter(f.m);
+            burst(cx, cy, '#ffd447', 24);
+            addRing(cx, cy, '#ffd447', 2);
+            f.m.flash = 1;
+          }
+          infoKey = '';
+        } else Sfx.error();
+        break;
     }
   }
 
   // ---------- 盤面のタップ（クリック） ----------
+  // 指で押したマスが、持っている機械を置けないマス（ベルト・出入口など）でも、すぐ隣に置けるマスがあればそちらに吸いつける
+  // bx, by：押した位置（盤面のピクセル）。マスの境目の近くを押したときだけ効く（マスのまん中を押したら、そのマス）
+  const SNAP_DIST = 0.85 * TILE;
+  function snapCell(cx, cy, bx, by, m) {
+    const ok = (x, y) => {
+      if (!inBounds(x, y) || !canPlaceType(m.type, x, y)) return false;
+      const o = machineAt(x, y);
+      if (o && o !== m) return false;
+      return cellCount(m.type) < 2 || fitRot(m, x, y, m.rot || 0) != null;
+    };
+    if (ok(cx, cy) || machineAt(cx, cy)) return [cx, cy];
+    let best = null;
+    let bd = SNAP_DIST;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const x = cx + dx;
+      const y = cy + dy;
+      if ((dx || dy) && ok(x, y)) {
+        const d = Math.hypot((x + 0.5) * TILE - bx, (y + 0.5) * TILE - by);
+        if (d < bd) {
+          bd = d;
+          best = [x, y];
+        }
+      }
+    }
+    return best || [cx, cy];
+  }
   // 持っている機械があれば、そのマスに置く。なければ、そのマスの機械を選ぶ
-  function tapCell(cx, cy) {
+  function tapCell(cx, cy, bx, by, touch) {
     const R = G.run;
     if (!R || G.state !== 'build' || !inBounds(cx, cy)) return;
+    if (shopSel != null) {
+      // ショップの品の説明を見ていたら閉じる
+      shopSel = null;
+      G.dirty = true;
+    }
     if (R.sel != null) {
+      const f = findMachine(R.sel);
+      if (touch && f && bx != null) [cx, cy] = snapCell(cx, cy, bx, by, f.m);
       const other = machineAt(cx, cy);
       const res = placeAt(R.sel, cx, cy);
       if (res === 'ok') {
@@ -6304,31 +8068,55 @@ const UI = (() => {
   // 押した瞬間を press に記録して、少し動かしたらドラッグ、動かさずに離したらタップとして扱う
   //   kind: 'canvas'（盤面の空きマス）| 'grid'（盤面の機械）| 'tray'（手持ち）| 'shop'（ショップの品）
   // ドラッグ中は G.drag = { uid, type, rot, moved }（描画が置いたときの見え方を出すのに使う）
+  // タッチでは、指でマスが隠れないように、ドラッグの絵と置き場所の見え方を指より TOUCH_OFFSET だけ上に出す
+  // 盤面・手持ちの機械をショップの欄へ運ぶと売却、盤面の機械を手持ちの欄へ運ぶと手持ちに戻す
+  const TOUCH_OFFSET = 55;
   let press = null;
   let suppressClick = false;
   let ghost = null;
   function rectHas(el, e) {
+    if (!el) return false;
     const r = el.getBoundingClientRect();
     return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+  }
+  // ドラッグの絵と置き場所を出す位置（タッチなら指より上）
+  function aimPoint(e, p) {
+    return { clientX: e.clientX, clientY: e.clientY - (p && p.touch ? TOUCH_OFFSET : 0) };
   }
   function beginPress(e, info) {
     // 前のドラッグの後始末が残っていたら片付けてから（指を離したことが届かなかったとき）
     if (press || ghost || G.drag) cancelDrag();
     hoverTray = null;
+    hoverShop = null;
     press = { ...info, id: e.pointerId, sx: e.clientX, sy: e.clientY, moved: false, touch: e.pointerType !== 'mouse' };
+  }
+  // 指（カーソル）が今どの欄の上にあるか：'sell'（ショップ＝売却）| 'stash'（手持ち＝戻す）| null
+  function dropZone(e) {
+    if (!press || (press.kind !== 'grid' && press.kind !== 'tray')) return null;
+    if (rectHas(dock, e)) return 'sell';
+    if (press.kind === 'grid' && rectHas($('hand-zone'), e)) return 'stash';
+    return null;
   }
   function moveGhost(e) {
     if (!ghost) return;
-    ghost.style.left = e.clientX + 'px';
-    ghost.style.top = e.clientY + 'px';
-    // 盤面の上では、盤面に置いたときの見え方を描くので、指の下の小さな絵は消す
-    ghost.classList.toggle('on-board', rectHas(canvas, e));
-    ghost.classList.toggle('stash', press && press.kind === 'grid' && rectHas(side, e));
+    const pt = aimPoint(e, press);
+    ghost.style.left = pt.clientX + 'px';
+    ghost.style.top = pt.clientY + 'px';
+    // 盤面の上では、盤面に置いたときの見え方を描くので、指の上の小さな絵は消す
+    ghost.classList.toggle('on-board', rectHas(canvas, pt));
+    const zone = dropZone(e);
+    ghost.classList.toggle('stash', zone === 'stash');
+    ghost.classList.toggle('sell', zone === 'sell');
+    const sz = dock;
+    if (sz) sz.classList.toggle('sell-hot', zone === 'sell');
+    const hz = $('hand-zone');
+    if (hz) hz.classList.toggle('stash-hot', zone === 'stash');
   }
   function dropGhost() {
     // 何かの拍子に2つ以上できていても、全部消す
     for (const el of document.querySelectorAll('.drag-ghost')) el.remove();
     ghost = null;
+    for (const el of document.querySelectorAll('.sell-hot, .stash-hot')) el.classList.remove('sell-hot', 'stash-hot');
   }
   function onPointerMove(e) {
     // ドラッグの絵だけが残っている（押していないのに絵がある）ときは消す
@@ -6348,41 +8136,49 @@ const UI = (() => {
       return;
     }
     if (!press.moved) {
-      if (Math.hypot(e.clientX - press.sx, e.clientY - press.sy) < (press.touch ? 12 : 7)) return;
+      const dx = e.clientX - press.sx;
+      const dy = e.clientY - press.sy;
+      if (Math.hypot(dx, dy) < (press.touch ? 12 : 7)) return;
       if (press.kind === 'canvas') {
         press = null; // 空きマスから動かしただけ
         return;
       }
+      // ショップのカードの列をスクロールする向き（PC：横／スマホ：縦）に指を動かしたときは、ブラウザがスクロールにして
+      // pointercancel が届く（そこでドラッグをやめる）。それ以外の向きならドラッグになる
       press.moved = true;
       const f = press.uid != null ? findMachine(press.uid) : null;
-      const type = press.kind === 'shop' ? R.shop[press.shop].type : f && f.m.type;
+      const s = press.kind === 'shop' ? R.shop[press.shop] : null;
+      // 消耗品はドラッグしない（タップで買う）
+      const type = s ? s.type : f && f.m.type;
       if (!type) {
         press = null;
         return;
       }
-      G.drag = { uid: press.kind === 'shop' ? null : press.uid, type: press.kind === 'shop' ? type : null, rot: null, moved: true };
-      R.sel = press.kind === 'shop' ? null : press.uid;
+      G.drag = { uid: s ? null : press.uid, type: s ? type : null, rot: null, moved: true };
+      R.sel = s ? null : press.uid;
       ghost = document.createElement('div');
-      ghost.className = 'drag-ghost';
-      ghost.innerHTML = glyphHTML(type) + `<span>${press.kind === 'grid' ? '手持ちに戻す' : ''}</span>`;
+      ghost.className = 'drag-ghost' + (press.touch ? ' touch' : '');
+      ghost.innerHTML = glyphHTML(type) + `<span class="g-stash">手持ちに戻す</span><span class="g-sell">売却 +${f ? sellValue(f.m) : 0}枚</span>`;
       document.body.appendChild(ghost);
       Sfx.click();
       G.dirty = true;
     }
     if (e.cancelable) e.preventDefault();
     moveGhost(e);
-    G.hover = rectHas(canvas, e) ? Render.toBoard(e.clientX, e.clientY) : null;
+    const pt = aimPoint(e, press);
+    G.hover = rectHas(canvas, pt) ? Render.toBoard(pt.clientX, pt.clientY) : null;
   }
   function onPointerUp(e) {
     if (!press || e.pointerId !== press.id) return;
     const p = press;
+    const zone = dropZone(e);
     press = null;
     // タッチにはカーソルがないので、指を離したら「置いたときの見え方」を消す（その場に残ると紛らわしい）
     const clearHover = () => {
       if (p.touch) G.hover = null;
     };
     if (!p.moved) {
-      if (p.kind === 'canvas' || p.kind === 'grid') tapCell(p.cx, p.cy);
+      if (p.kind === 'canvas' || p.kind === 'grid') tapCell(p.cx, p.cy, p.bx, p.by, p.touch);
       clearHover();
       return; // 手持ち・ショップのタップは、いつもの click で処理する
     }
@@ -6394,21 +8190,33 @@ const UI = (() => {
     G.drag = null;
     dropGhost();
     if (!R || G.state !== 'build' || !drag) return;
-    if (rectHas(canvas, e)) {
-      const b = Render.toBoard(e.clientX, e.clientY);
+    const pt = aimPoint(e, p);
+    if (zone === 'sell') {
+      // ショップの欄へ：売却
+      const f = findMachine(drag.uid);
+      const v = f ? sellValue(f.m) : 0;
+      if (sellMachine(drag.uid)) {
+        Sfx.sell();
+        banner(`売却 +${v}枚`);
+      }
+    } else if (zone === 'stash') {
+      R.sel = drag.uid;
+      stashSelected();
+      Sfx.click();
+    } else if (rectHas(canvas, pt)) {
+      const b = Render.toBoard(pt.clientX, pt.clientY);
       G.hover = b;
       let uid = drag.uid;
       if (p.kind === 'shop') {
         // ショップから盤面へ：買って、そのまま置く
+        const s = R.shop[p.shop];
         const res = buyShop(p.shop);
-        if (res !== 'ok') {
-          Sfx.error();
-          banner(res === 'cap' ? '所持の上限です' : 'コイン不足', 'bad');
+        shopSel = null;
+        if (!buyFx(res, s) || res !== 'ok') {
           R.sel = null;
           G.dirty = true;
           return;
         }
-        Sfx.buy();
         uid = R.tray[R.tray.length - 1].uid;
         if (drag.rot != null) R.tray[R.tray.length - 1].rot = drag.rot;
       }
@@ -6417,11 +8225,6 @@ const UI = (() => {
       else if (res !== 'invalid' && res !== 'gate') placeError(res, false);
       else Sfx.error();
       if (res !== 'ok' && p.kind === 'shop') banner('置けなかったので、手持ちに入れました', 'bad');
-    } else if (p.kind === 'grid' && rectHas(side, e)) {
-      // 盤面から右の欄へ：手持ちに戻す
-      R.sel = drag.uid;
-      stashSelected();
-      Sfx.click();
     }
     R.sel = null;
     G.dirty = true;
@@ -6461,7 +8264,7 @@ const UI = (() => {
   function onCanvasDown(e) {
     Sfx.unlock();
     const R = G.run;
-    if (!R) return;
+    if (!R || R.demo) return;
     const b = Render.toBoard(e.clientX, e.clientY);
     G.hover = b;
     if (e.button === 2) {
@@ -6473,23 +8276,33 @@ const UI = (() => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     if (G.state !== 'build' || !inBounds(b.cx, b.cy)) return;
     const m = machineAt(b.cx, b.cy);
-    beginPress(e, { kind: m ? 'grid' : 'canvas', uid: m ? m.uid : null, cx: b.cx, cy: b.cy });
+    beginPress(e, { kind: m ? 'grid' : 'canvas', uid: m ? m.uid : null, cx: b.cx, cy: b.cy, bx: b.x, by: b.y });
   }
+  // ショップのカードを押したとき：マウスなら、そのまま盤面へドラッグして買える（「購入」ボタン・🔒は除く）
+  // タッチでは何もしない（指でカードの列をスクロールできるように。買うのは「購入」ボタン、説明はタップ）
+  function onDockDown(e) {
+    const R = G.run;
+    if (!R || R.demo || G.state !== 'build' || e.pointerType !== 'mouse' || e.button !== 0) return;
+    Sfx.unlock();
+    if (e.target.closest('[data-lock]')) return;
+    const s = e.target.closest('[data-shop]');
+    const i = s ? +s.dataset.shop : -1;
+    const it = s && R.shop[i];
+    if (!it || it.sold || it.item || buyState(it, R) !== 'can') return;
+    beginPress(e, { kind: 'shop', shop: i });
+  }
+  // 手持ちの機械を押したとき：ドラッグで盤面へ（タップは click で選ぶ）
   function onSideDown(e) {
     const R = G.run;
-    if (!R || G.state !== 'build' || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    if (!R || R.demo || G.state !== 'build' || (e.pointerType === 'mouse' && e.button !== 0)) return;
     Sfx.unlock();
     const t = e.target.closest('[data-tray]');
-    if (t) {
-      beginPress(e, { kind: 'tray', uid: +t.dataset.tray });
-      return;
-    }
-    const s = e.target.closest('[data-shop]');
-    if (s && R.shop[+s.dataset.shop] && !R.shop[+s.dataset.shop].sold) beginPress(e, { kind: 'shop', shop: +s.dataset.shop });
+    if (t) beginPress(e, { kind: 'tray', uid: +t.dataset.tray });
   }
   function setSpeed(s) {
     G.speedMul = s;
     $('btn-speed').textContent = '×' + s;
+    for (const b of document.querySelectorAll('[data-ui="speed"]')) b.classList.toggle('on', +b.dataset.speed === s);
   }
 
   function onKey(e) {
@@ -6525,8 +8338,13 @@ const UI = (() => {
     });
     canvas.addEventListener('pointerleave', () => (G.hover = null));
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-    side.addEventListener('click', onSideClick);
+    dock = $('dock');
+    detailBar = $('detail-bar');
+    foot = $('foot');
+    for (const el of [side, dock, detailBar, foot]) el.addEventListener('click', onPanelClick);
+    dock.addEventListener('pointerdown', onDockDown);
     side.addEventListener('pointerdown', onSideDown);
+    for (const el of [side, dock]) el.addEventListener('contextmenu', (e) => e.preventDefault()); // 長押しでメニューを出さない
     window.addEventListener('pointermove', onPointerMove, { passive: false });
     window.addEventListener('pointerup', onPointerUp);
     window.addEventListener('pointercancel', (e) => {
@@ -6539,13 +8357,13 @@ const UI = (() => {
         e.preventDefault();
       }
     }, true);
-    // 機械の詳細ポップアップ（右の欄の上に重ねる）
-    const pop = document.createElement('div');
-    pop.id = 'info-pop';
-    pop.className = 'info info-pop hidden';
-    document.body.appendChild(pop);
-    pop.addEventListener('click', onSideClick);
-    // 手持ちの機械にカーソルを合わせると詳細を出す（マウスだけ。タッチにはカーソルがないので、タップで選んだときに出す）
+    // 手持ち・ショップの品にカーソルを合わせると、右の欄に詳細を出す（マウスだけ。タッチはタップで選んだときに詳細バーで出す）
+    dock.addEventListener('pointerover', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      const s = e.target.closest('[data-shop]');
+      hoverShop = s ? +s.dataset.shop : null;
+    });
+    dock.addEventListener('pointerleave', () => (hoverShop = null));
     side.addEventListener('pointerover', (e) => {
       if (e.pointerType !== 'mouse') return;
       const t = e.target.closest('[data-tray]');
@@ -6560,20 +8378,23 @@ const UI = (() => {
     card.addEventListener('click', onOverlayClick);
     $('coach').addEventListener('click', onCoachClick);
     window.addEventListener('keydown', onKey);
-    window.addEventListener('resize', () => Render.resize());
-    if (window.ResizeObserver) new ResizeObserver(() => Render.resize()).observe(canvas.parentElement);
+    window.addEventListener('resize', () => layout());
+    if (window.ResizeObserver) {
+      new ResizeObserver(() => layout()).observe($('main'));
+      new ResizeObserver(() => Render.resize()).observe(canvas.parentElement);
+    }
     $('btn-speed').addEventListener('click', () => setSpeed(G.speedMul === 1 ? 2 : G.speedMul === 2 ? 4 : 1));
     $('btn-mute').addEventListener('click', () => {
       const m = Sfx.toggle();
       $('btn-mute').textContent = m ? '×' : '♪';
     });
     $('btn-menu').addEventListener('click', () => {
-      if (!G.run || G.state === 'over' || G.state === 'title' || G.state === 'result') return;
+      if (!G.run || G.run.demo || G.state === 'over' || G.state === 'title' || G.state === 'result') return;
       G.pausedFrom = G.state;
       G.state = 'paused';
       showPause();
     });
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => Render.resize());
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => layout());
 
     showTitle();
     let last = performance.now();
@@ -6587,7 +8408,7 @@ const UI = (() => {
         G.dirty = false;
         renderSide();
       } else {
-        renderInfo(false); // 準備・稼働中以外ではポップアップを隠す
+        renderInfo(false); // カーソルを合わせた相手が変わったら詳細を描き直す
       }
       updateHUD();
       Render.draw();
@@ -6596,7 +8417,7 @@ const UI = (() => {
     requestAnimationFrame(loop);
   }
 
-  return { init, banner, showResult, showGameOver, renderSide, achievement };
+  return { init, banner, showResult, showGameOver, renderSide, achievement, resultCard: () => G.run && makeResultCard(G.run) };
 })();
 
 window.addEventListener('DOMContentLoaded', UI.init);
