@@ -10,10 +10,10 @@
 <meta property="og:title" content="コンベア錬金">
 <meta property="og:description" content="ベルトの脇に機械を並べ、流れる原料を足し算→掛け算で膨らませる工場系ローグライク。">
 <meta name="twitter:card" content="summary">
-<link rel="canonical" href="https://goldrail777.github.io/">
-<meta property="og:url" content="https://goldrail777.github.io/">
+<link rel="canonical" href="https://goldrail777.github.io/096/">
+<meta property="og:url" content="https://goldrail777.github.io/096/">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"VideoGame","url":"https://goldrail777.github.io/","name":"コンベア錬金","description":"ベルトの脇に機械を並べ、流れる原料を足し算→掛け算で膨らませる工場系ローグライク。5日ごとの納期までにノルマを出荷し、機械の組み合わせを見つけて限界を超えろ。","genre":["ローグライク","ストラテジー","シミュレーション"],"gamePlatform":"Webブラウザ","applicationCategory":"Game","operatingSystem":"Windows, macOS, iOS, Android","inLanguage":"ja","playMode":"SinglePlayer","offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"}}
+{"@context":"https://schema.org","@type":"VideoGame","url":"https://goldrail777.github.io/096/","name":"コンベア錬金","description":"ベルトの脇に機械を並べ、流れる原料を足し算→掛け算で膨らませる工場系ローグライク。5日ごとの納期までにノルマを出荷し、機械の組み合わせを見つけて限界を超えろ。","genre":["ローグライク","ストラテジー","シミュレーション"],"gamePlatform":"Webブラウザ","applicationCategory":"Game","operatingSystem":"Windows, macOS, iOS, Android","inLanguage":"ja","playMode":"SinglePlayer","offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"}}
 </script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2314161d'/%3E%3Crect x='6' y='38' width='52' height='14' rx='7' fill='%233a4152'/%3E%3Cg fill='%2314161d'%3E%3Crect x='14' y='41' width='3' height='8'/%3E%3Crect x='24' y='41' width='3' height='8'/%3E%3Crect x='34' y='41' width='3' height='8'/%3E%3Crect x='44' y='41' width='3' height='8'/%3E%3C/g%3E%3Ccircle cx='32' cy='22' r='13' fill='%23ffd447'/%3E%3Ccircle cx='32' cy='22' r='8' fill='none' stroke='%23b07800' stroke-width='3'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -559,6 +559,42 @@ button { font-family: inherit; }
   .info-pop .row .btn { min-height: 44px; }
 }
 
+/* 研究所へのボタン：研究できるものがあるときは、光って目立つ */
+.btn.research-go { display: flex; align-items: center; gap: 12px; text-align: left; position: relative; overflow: hidden;
+  background: linear-gradient(135deg, #3b6dff, #7a4dff); color: #fff; box-shadow: 0 4px 0 #23317a, 0 0 22px #6f7bff88; animation: researchGlow 1.6s ease-in-out infinite; }
+.btn.research-go::after { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, #ffffff55 50%, transparent 70%); transform: translateX(-100%); animation: researchShine 2.4s ease-in-out infinite; }
+.btn.research-go .rg-ico { font-size: 26px; flex: none; }
+.btn.research-go .rg-body { flex: 1; display: flex; flex-direction: column; line-height: 1.35; }
+.btn.research-go .rg-body > b { font-size: 17px; }
+.btn.research-go .rg-body span { font-size: 12px; font-weight: 500; opacity: .92; }
+.btn.research-go .rg-body span b { color: #ffe27a; }
+.btn.research-go .rg-badge { flex: none; font-size: 11px; font-weight: 900; color: #2a2000; background: #ffd447; border-radius: 999px; padding: 3px 9px; animation: badgeBounce 1.2s ease-in-out infinite; }
+.btn.research-go.big { padding: 16px 18px; }
+.btn.research-go.big .rg-body > b { font-size: 20px; }
+.rg-gap { display: inline-block; margin-left: 8px; font-size: 11px; font-weight: 500; color: var(--muted); }
+@keyframes researchGlow { 0%, 100% { box-shadow: 0 4px 0 #23317a, 0 0 14px #6f7bff66; } 50% { box-shadow: 0 4px 0 #23317a, 0 0 30px #8f9bffcc; } }
+@keyframes researchShine { 0%, 55% { transform: translateX(-100%); } 85%, 100% { transform: translateX(100%); } }
+@keyframes badgeBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+
+/* ゲームオーバー画面：もらった特許を大きく */
+.patent-gain { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 12px; margin: 10px 0 8px; padding: 12px 14px; border-radius: 12px;
+  background: linear-gradient(135deg, #16223f, #141a2c); border: 1px solid #3b6dff88; text-align: left; }
+.patent-gain .pg-l { font-size: 13px; color: #c3cde6; }
+.patent-gain .pg-v { grid-row: span 2; font-size: 34px; font-weight: 900; color: var(--blue); font-variant-numeric: tabular-nums; text-shadow: 0 0 18px #7fd6ff66; }
+.patent-gain .pg-s { font-size: 12px; color: var(--muted); }
+.patent-gain .pg-s b { color: var(--text); }
+.go-hint { font-size: 13px; color: #c9d2ff; margin: 10px 0 0; }
+.over-btns .btn.again { font-size: 16px; padding: 12px; border-color: var(--accent); }
+
+/* 完走の画面：ハイスコアモードへの案内 */
+.hi-invite { margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: linear-gradient(135deg, #3a3010, #241d0a); border: 1px solid #b8952a; text-align: left; }
+.hi-invite .t { color: var(--coin); font-weight: 900; font-size: 16px; }
+.hi-invite .d { color: #f0e2b0; font-size: 13px; margin-top: 4px; line-height: 1.6; }
+.hi-invite b { color: #fff; }
+@media (prefers-reduced-motion: reduce) {
+  .btn.research-go, .btn.research-go::after, .btn.research-go .rg-badge { animation: none; }
+}
+
 </style>
 </head>
 <body>
@@ -571,7 +607,7 @@ button { font-family: inherit; }
   <header id="hud">
     <div class="hud-block">
       <span class="label">DAY</span>
-      <span class="big"><span id="hud-day">1</span><span class="sub" id="hud-dayof"> / 12</span></span>
+      <span class="big"><span id="hud-day">1</span><span class="sub" id="hud-dayof"> / 納期 5</span></span>
     </div>
     <div class="hud-block quota">
       <div class="quota-row">
@@ -620,9 +656,12 @@ const ROWS = 9;
 const TILE = 64;
 // 納期：ノルマは「期」ごとにまとめて課される。納期は期が始まってから PHASE_DAYS 日目（第1期は5日目）。
 // その期の出荷額の合計がノルマに届いた日に次の期へ進み、次の期の納期はそこからまた PHASE_DAYS 日目。納期の日までに届かなければ解雇
-// PHASES 期まで達成すると完走。そのあとはエンドレス（どこまで行けるかが記録になる）
+// PHASES 期まで達成すると完走（研究を重ねてやっと届く、遠くて高いゴール）。そのあとはハイスコアモード
 const PHASE_DAYS = 5;
-const PHASES = 3; // 完走までの期の数
+const PHASES = 6; // 完走までの期の数
+// ハイスコアモード：完走のあと HISCORE_DAYS 日、ノルマなしで出荷した合計を競う。最後に、1兆（10^HISCORE_PATENT_FROM）を超えた桁ぶんの特許
+const HISCORE_DAYS = 5;
+const HISCORE_PATENT_FROM = 12;
 const MAX_DAYS = PHASE_DAYS * PHASES; // 完走までにかかる日数の最大（早く達成すればもっと短い）
 
 // テストプレイ用の機能（研究所の「テストモード」）。完成版では false にするだけで消える
@@ -638,8 +677,8 @@ const RARITY = {
 const TIERS = [
   { name: '石', color: '#9aa3ad', edge: '#5d646d', ship: 1 },
   { name: '銅', color: '#e08a4f', edge: '#8a4a22', ship: 2 },
-  { name: '銀', color: '#e3eaf3', edge: '#8793a3', ship: 3 },
-  { name: '金', color: '#ffd447', edge: '#b07800', ship: 4 },
+  { name: '銀', color: '#e3eaf3', edge: '#8793a3', ship: 4 },
+  { name: '金', color: '#ffd447', edge: '#b07800', ship: 8 },
 ];
 
 // 発動順: 変換 → 加算 → 乗算 → 特殊
@@ -697,11 +736,11 @@ const MACHINES = {
   },
   prism: {
     name: 'プリズム', glyph: '晶', color: '#7fb8e6', rarity: 3, cost: 8, kind: 'mult', locked: true, size: 2, cells: 2, family: 'base',
-    desc: '価値 <b>×(1 + 0.5×隣の機械の種類数)</b>（ベルト型も数える。違う機械で囲むほど強い）。<b>大型：2マス・設置枠2つ</b>（隣が最大6マスになる）',
-    mod: { name: '全反射', desc: '1種類につき +0.5 → <b>+0.75</b>' },
+    desc: '価値 <b>×(1 + 隣の機械の種類数)</b>（ベルト型も数える。違う機械で囲むほど強い：3種類で×4、6種類で×7）。<b>大型：2マス・設置枠2つ</b>（隣が最大6マスになる）',
+    mod: { name: '全反射', desc: '1種類につき +1 → <b>+1.5</b>（6種類で×10）' },
     apply: (c) => {
       const n = c.adjKinds();
-      return n > 0 ? c.mul(1 + (c.mod() ? 0.75 : 0.5) * n) : c.none();
+      return n > 0 ? c.mul(1 + (c.mod() ? 1.5 : 1) * n) : c.none();
     },
   },
   amp: {
@@ -756,12 +795,12 @@ const MACHINES = {
   },
   melter: {
     name: '溶解炉', glyph: '溶', color: '#b84a6a', rarity: 2, cost: 6, kind: 'mult', hot: true, family: 'stone',
-    desc: '価値 <b>×20</b>（熱+1）。ただし <b>素材ランクを1つ下げる</b>（金→銀→銅→石）。<b>石には効かない</b>：錬金釜で上げたランクを燃料にして燃やす',
+    desc: '価値 <b>×30</b>（熱+1）。ただし <b>素材ランクを1つ下げる</b>（金→銀→銅→石）。<b>石には効かない</b>：錬金釜で上げたランクを燃料にして燃やす',
     mod: { name: '精錬', desc: '<b>石</b>のアイテムにも <b>×2</b> で効く（錬金釜がなくても働く）' },
     apply: (c) => {
       if (c.item.tier > 0) {
         c.rankDown();
-        return c.mul(20);
+        return c.mul(30);
       }
       return c.mod() ? (c.ach('x_melt_stone'), c.mul(2)) : c.none('石');
     },
@@ -769,20 +808,20 @@ const MACHINES = {
   // ----- 黄金：錬金釜で金に変えて、金細工師で磨く（錬金釜3台が要るぶん、伸びは一番） -----
   transmuter: {
     name: '錬金釜', glyph: '錬', color: '#9a63e6', rarity: 1, cost: 4, kind: 'transform', belt: true, family: 'gold',
-    desc: '通ったアイテムの素材ランクを1つ上げる（石→銅→銀→金）。金なら価値 <b>×2</b><br>出荷時 銅<b>×2</b> 銀<b>×3</b> 金<b>×4</b>',
+    desc: '通ったアイテムの素材ランクを1つ上げる（石→銅→銀→金）。金なら価値 <b>×3</b><br>出荷時 銅<b>×2</b> 銀<b>×4</b> 金<b>×8</b>',
     mod: { name: '錬金の火', desc: 'ランクが上がるたびに <b>熱+2</b>' },
     apply: (c) => c.transmute(),
   },
   goldsmith: {
     name: '金細工師', glyph: '金', color: '#e69a00', rarity: 2, cost: 6, kind: 'mult', family: 'gold',
-    desc: '素材ランクが高いほど強い：<b>金</b>なら価値 <b>×4</b>、銀なら ×3、銅なら ×2。石は <b>+2</b>',
+    desc: '素材ランクが高いほど強い：<b>金</b>なら価値 <b>×6</b>、銀なら ×4、銅なら ×2.5。石は <b>+2</b>',
     mod: { name: '原石磨き', desc: '<b>石</b>のアイテムでも <b>×2</b>（錬金釜がなくても働く）' },
-    apply: (c) => (c.item.tier > 0 ? c.mul(1 + c.item.tier) : c.mod() ? (c.ach('x_stone_gold'), c.mul(2)) : c.add(2)),
+    apply: (c) => (c.item.tier > 0 ? c.mul([1, 2.5, 4, 6][c.item.tier]) : c.mod() ? (c.ach('x_stone_gold'), c.mul(2)) : c.add(2)),
   },
   alchemist: {
     name: '錬金術師', glyph: '術', color: '#8f5ad8', rarity: 2, cost: 6, kind: 'passive', locked: true, family: 'gold',
-    desc: '<i>常時</i>（どこに置いても）：錬金釜で <b>ランクが上がるたびに価値 ×2</b>（2台なら×3、3台なら×4）',
-    mod: { name: '大錬成', desc: '金のアイテムが錬金釜を通ったときの ×2 も、錬金術師1台につき <b>+1</b>（錬金釜を4台以上並べる意味が出る）' },
+    desc: '<i>常時</i>（どこに置いても）：錬金釜で <b>ランクが上がるたびに価値 ×3</b>（2台なら×5、3台なら×7）',
+    mod: { name: '大錬成', desc: '金のアイテムが錬金釜を通ったときの ×3 も、錬金術師1台につき <b>+2</b>（錬金釜を4台以上並べる意味が出る）' },
     apply: null,
   },
   // ----- 大当たり：確率を上げて、当たりを大きくする（日によってぶれる） -----
@@ -1071,8 +1110,9 @@ const TIPS = [
   '納期を達成した日の日報ボーナスは、いつもより豪華です。',
   '超過ボーナスは、納期のノルマの2倍ごとに +1枚（最大5枚）。',
   '次の期のノルマは、納期を達成した画面で予告されます。上がり幅が大きいので、早めに盤面を育てましょう。',
-  '完走したあとは <b>エンドレス</b>。ノルマは期ごとに伸びが急になります。どこまで行けるかは盤面しだい。',
-  'エンドレスでは、期が進むほど納期達成の特許が増えます。退職すれば、それまでの特許はすべてもらえます。',
+  '完走のゴールは第6期。研究なしではまず届きません。特許をためて研究を進め、少しずつ遠くの期へ。',
+  '後の期ほど、納期達成でもらえる特許が増えます。届かなかったランでも、特許はちゃんとたまります。',
+  '完走したあとは <b>ハイスコアモード</b>。ノルマなしの5日間で、どれだけ出荷できるかを競います。',
   '4日ごとに <b>ボス日</b>。特殊ルールが付きます。ボス日に納期が重ならないよう、出荷の計画を立てましょう。',
   '★強化マスと✕故障マスは毎日場所が変わります。準備中に機械を動かして合わせましょう。',
   '改造キットは「+」「×」の機械に使えます。同じ機械に重ねがけもできます。',
@@ -1082,7 +1122,7 @@ const TIPS = [
   '研究所では、機械ごとに <b>習熟</b> を1段ずつ進めます。最後まで進めると、その機械の <b>追加効果</b>（新しい働き）を研究できます。',
   '習熟を進めた機械は、ショップに並びやすくなります。よく使う機械から育てると、組み合わせがそろいやすくなります。',
   '説明文の「何に反応するか」に注目すると、機械どうしのつながりが見えてきます。',
-  '素材ランクは出荷のときにも効きます（銅 ×2・銀 ×3・金 ×4）。',
+  '素材ランクは出荷のときにも効きます（銅 ×2・銀 ×4・金 ×8）。',
   '大型の機械は、盤面の2マスと設置枠2つを使います。向きは「向きを変える」ボタンか <kbd>R</kbd> キーで変えられます。',
   '機械はドラッグで動かせます。手持ちやショップから盤面へドラッグして置くこともできます。',
   '維持費のある機械は、稼働開始のときにコインを払います。払えない日は止まります。',
@@ -1099,35 +1139,35 @@ const ACH_CATS = [
   { id: 'record', name: '記録' },
   { id: 'build', name: '組み合わせ' },
   { id: 'cross', name: 'かけ合わせ（追加効果）' },
-  { id: 'endless', name: 'エンドレス' },
+  { id: 'endless', name: '大口取引・ハイスコア' },
   { id: 'event', name: 'ボス・その他' },
 ];
 const ACHIEVEMENTS = [
   // 出世の道
   { id: 'first_day', cat: 'prog', tier: 1, name: '初納品', desc: '第1期の納期を達成する' },
   { id: 'day6', cat: 'prog', tier: 1, name: '中堅社員', desc: '第2期の納期を達成する' },
-  { id: 'win', cat: 'prog', tier: 2, name: '完走', desc: '第3期の納期まで達成して、完走する' },
-  { id: 'wins3', cat: 'prog', tier: 2, name: '常連', desc: '3回完走する' },
-  { id: 'endless15', cat: 'prog', tier: 3, name: '残業の鬼', desc: 'エンドレスで第5期の納期を達成する' },
-  { id: 'win_nores', cat: 'prog', tier: 3, name: '叩き上げ', desc: '研究を1つも取っていない状態で完走する' },
+  { id: 'win', cat: 'prog', tier: 3, name: '完走', desc: '第6期の納期まで達成して、完走する' },
+  { id: 'wins3', cat: 'prog', tier: 3, name: '常連', desc: '3回完走する' },
+  { id: 'endless15', cat: 'prog', tier: 2, name: '残業の鬼', desc: 'ハイスコアモードを最後（5日間）まで遊ぶ' },
+  { id: 'win_nores', cat: 'prog', tier: 3, name: '叩き上げ', desc: '研究を1つも取っていない状態で、第4期の納期を達成する' },
   { id: 'res5', cat: 'prog', tier: 1, name: '研究員', desc: '研究を合計5段階進める' },
   { id: 'res25', cat: 'prog', tier: 2, name: '主任研究員', desc: '研究を合計40段階進める' },
   { id: 'mods10', cat: 'prog', tier: 3, name: '改造マニア', desc: '機械の「追加効果」を5個研究する' },
   { id: 'branch_top', cat: 'prog', tier: 2, name: '免許皆伝', desc: '研究所で、どれかの分類の3段目を開く' },
-  // エンドレス
-  { id: 'end4', cat: 'endless', tier: 1, name: '残業手当', desc: 'エンドレスで第4期の納期を達成する' },
-  { id: 'end6', cat: 'endless', tier: 2, name: '終電を逃す', desc: 'エンドレスで第6期の納期を達成する' },
-  { id: 'end8', cat: 'endless', tier: 3, name: '泊まり込み', desc: 'エンドレスで第8期の納期を達成する' },
-  { id: 'end10', cat: 'endless', tier: 3, secret: true, name: '不夜城', desc: 'エンドレスで第10期の納期を達成する', hint: 'エンドレスのさらに先' },
-  { id: 'fast_win', cat: 'endless', tier: 2, name: '前倒し経営', desc: '8日以内に完走する' },
-  { id: 'lev_end', cat: 'endless', tier: 2, name: '残業も強気', desc: 'エンドレスで、レバレッジ Lv3 以上の期の納期を達成する' },
+  // 大口取引・ハイスコア
+  { id: 'end4', cat: 'endless', tier: 1, name: '大口取引', desc: '第4期の納期を達成する' },
+  { id: 'end6', cat: 'endless', tier: 2, name: '大企業の仲間入り', desc: '第5期の納期を達成する' },
+  { id: 'end8', cat: 'endless', tier: 3, name: '京の出荷', desc: 'ハイスコアモードで、合計 1京 以上を出荷する' },
+  { id: 'end10', cat: 'endless', tier: 3, secret: true, name: '天文学的', desc: 'ハイスコアモードで、合計 1𥝱 以上を出荷する', hint: '京・垓のさらに先' },
+  { id: 'fast_win', cat: 'endless', tier: 2, name: '前倒し経営', desc: '15日以内に完走する' },
+  { id: 'lev_end', cat: 'endless', tier: 2, name: '最後まで強気', desc: '第6期の納期を、レバレッジ Lv1 以上で達成する' },
   // レバレッジ
   { id: 'lev1', cat: 'lev', tier: 1, name: '強気', desc: 'レバレッジ Lv1 以上で納期を達成する' },
   { id: 'lev3', cat: 'lev', tier: 2, name: '勝負師', desc: 'レバレッジ Lv3 以上で納期を達成する' },
   { id: 'lev5', cat: 'lev', tier: 3, name: '命知らず', desc: 'レバレッジ Lv5 以上で納期を達成する' },
   { id: 'lev_boss', cat: 'lev', tier: 2, name: 'ボスにも強気', desc: 'レバレッジ Lv2 以上の期の納期を、ボス日に達成する' },
   { id: 'lev_all', cat: 'lev', tier: 3, name: '常に全力', desc: 'すべての期をレバレッジ Lv1 以上で完走する' },
-  { id: 'lev_sum', cat: 'lev', tier: 3, name: '攻めの経営', desc: '3つの期のレバレッジの合計が 6 以上で完走する' },
+  { id: 'lev_sum', cat: 'lev', tier: 3, name: '攻めの経営', desc: '6つの期のレバレッジの合計が 10 以上で完走する' },
   // 記録
   { id: 'unit_man', cat: 'record', tier: 1, name: '万の大台', desc: 'アイテム1個の価値が 1万 に届く' },
   { id: 'unit_oku', cat: 'record', tier: 1, name: '億り人', desc: 'アイテム1個の価値が 1億 に届く' },
@@ -1179,7 +1219,7 @@ const ACHIEVEMENTS = [
   { id: 'combo40', cat: 'event', tier: 1, name: '流れ作業', desc: '40連続出荷する' },
   { id: 'narrow', cat: 'event', tier: 1, name: '紙一重', desc: '納期のノルマの100〜110%ぎりぎりで達成する' },
   { id: 'early1', cat: 'event', tier: 1, name: '前倒し', desc: '期が始まったその日のうちに、納期を達成する' },
-  { id: 'early_all', cat: 'event', tier: 3, name: '電光石火', desc: '3日以内に完走する（すべての期を1日で達成する）' },
+  { id: 'early_all', cat: 'event', tier: 3, name: '電光石火', desc: '6日以内に完走する（すべての期を1日で達成する）' },
   { id: 'mini3', cat: 'event', tier: 2, name: 'ミニマリスト', desc: '第2期以降の納期を、機械3台以下で達成する' },
   { id: 'boss_all', cat: 'event', tier: 2, name: 'ボスキラー', desc: '5種類のボス日すべてで、その日に納期を達成する（ランをまたいで数える）' },
 ];
@@ -1220,26 +1260,16 @@ function niceRound(n) {
 // ===== 納期のノルマ =====
 // 期ごとのノルマ表（レバレッジ0のとき）。その期の出荷額の「合計」で数える。
 // 実際のノルマ = この表 × レイアウト倍率 × 3^レバレッジ
-// ノルマは大きく、期ごとの上がり幅も大きい。第1期は最初の2台と買い足した数台で届く。
-// 研究なしでも完走できる重さにしてあり、研究で強くなったぶんはエンドレスでどこまで行けるか、で遊ぶ
-const PHASE_TABLE = [3000, 30000, 1000000];
-// エンドレス（完走のあと）：期ごとの伸びが ENDLESS_BASE + ENDLESS_STEP×n 倍（×50、×65、×80…）と急になっていく。どんな盤面でもいつかは止まる
-const ENDLESS_BASE = 35;
-const ENDLESS_STEP = 15;
+// 第1〜3期は、はじめての人が置き方を覚えれば届く。第4期は研究なしで置き方がうまい人が届く高さ。第5期からは研究が要る（研究なしで一番うまく組んだ盤面でも1日 10^12 くらい）。
+// 第6期（完走）は、研究を半分ほど進めた盤面でも届くかどうかの高さ。研究を重ねて、組み合わせも見つけてやっと届くゴール
+const PHASE_TABLE = [3000, 30000, 1e6, 1e8, 1e12, 1e19];
 function quotaFor(phase) {
-  let q;
-  if (phase <= PHASE_TABLE.length) q = PHASE_TABLE[phase - 1];
-  else {
-    q = PHASE_TABLE[PHASE_TABLE.length - 1];
-    for (let i = 1; i <= phase - PHASE_TABLE.length; i++) q *= ENDLESS_BASE + ENDLESS_STEP * i;
-  }
-  return niceRound(Math.min(1e290, q));
-}
-// 納期を達成したときのコイン：基本 6 + 2×期、超過ボーナス（ノルマの2倍ごとに+1、最大5）、前倒しボーナス（納期まで残った1日につき EARLY_COIN）
+  return niceRound(PHASE_TABLE[Math.min(phase, PHASE_TABLE.length) - 1]);
+}// 納期を達成したときのコイン：基本 6 + 2×期、超過ボーナス（ノルマの2倍ごとに+1、最大5）、前倒しボーナス（納期まで残った1日につき EARLY_COIN）
 const PHASE_COIN_BASE = 6;
 const PHASE_COIN_STEP = 2;
 const EARLY_COIN = 2;
-// 特許：1日終えるごとに DAY_PATENT、納期を達成するごとに PHASE_PATENT × 期（第1期 3、第2期 6…。エンドレスほど多い。レバレッジは納期ぶんにだけ）
+// 特許：1日終えるごとに DAY_PATENT、納期を達成するごとに PHASE_PATENT × 期（第1期 3、第2期 6 … 第6期 18。後の期ほど多い。レバレッジは納期ぶんにだけ）
 const DAY_PATENT = 0.5;
 const PHASE_PATENT = 3;
 function pick(arr) {
@@ -1978,7 +2008,7 @@ const G = {
 function loadMeta() {
   // ach: 解除した実績 {id: 日時} / usedTypes: 稼働させた機械 / bossCleared: クリアしたボス日
   // wins: 12日完走の回数 / dev: テストモード（研究を自由にオンオフする砂場）
-  // best.phase: 達成したいちばん先の期（エンドレスを含む）
+  // best.phase: 達成したいちばん先の期 / best.hiscore: ハイスコアモードの最高出荷額
   const def = {
     patents: 0, research: {}, best: { day: 0, phase: 0, item: 0, lev: 0, dayScore: 0, ratio: 0, total: 0, patents: 0 }, history: [],
     tut: 'todo', // チュートリアル：'todo'＝まだ / 'done'＝済み（または飛ばした）
@@ -2142,7 +2172,17 @@ function finishTutorial() {
 // ---------- レバレッジの解放 ----------
 // レバレッジは1回完走してから使える（はじめての人に見せるものを減らす）
 function levOpen() {
-  return devOn() || (G.meta.wins || 0) > 0;
+  return devOn() || (G.meta.best.phase || 0) >= 3;
+}
+// いま研究できるもの（特許が足りて、前提もそろっている研究）の数。研究所のボタンを光らせるのに使う
+function researchAvail() {
+  if (devOn()) return 0;
+  let n = 0;
+  for (const r of RESEARCH) {
+    const l = rlv(r.id);
+    if (l < r.max && researchOpen(r) && G.meta.patents >= r.cost(l)) n++;
+  }
+  return n;
 }
 // ---------- 実績 ----------
 function hasAch(id) {
@@ -2546,7 +2586,7 @@ function weightedPick(pool) {
 function shopPool() {
   const R = G.run;
   const pool = Object.keys(MACHINES).filter(isUnlocked);
-  return !(G.meta.wins > 0) && !devOn() && R.day <= BASIC_DAYS ? pool.filter((t) => MACHINES[t].basic) : pool;
+  return (G.meta.best.phase || 0) < 3 && !devOn() && R.day <= BASIC_DAYS ? pool.filter((t) => MACHINES[t].basic) : pool;
 }
 function rollShop() {
   const R = G.run;
@@ -2588,7 +2628,7 @@ function startPhase() {
 // レバレッジ：期の最初の日の準備中に決める。1Lvごとに その期のノルマ×3、納期達成のコイン+50%・特許+50%
 function setLeverage(lv) {
   const R = G.run;
-  if (G.state !== 'build' || !R.phaseFresh) return false;
+  if (G.state !== 'build' || !R.phaseFresh || R.hi) return false;
   R.lev = levOpen() ? Math.max(0, Math.min(LEV_MAX, lv)) : 0;
   R.quota = niceRound(R.quotaBase * Math.pow(LEV_QMUL, R.lev));
   G.dirty = true;
@@ -3063,14 +3103,14 @@ function makeCtx(m, item, dry, pool, born) {
       }
       checkUnit(item, pos);
     },
-    // 錬金釜（ベルト型なので1個につき1回）。金なら×2。錬金術師がいればランクが上がるたびに ×(1+台数)
+    // 錬金釜（ベルト型なので1個につき1回）。金なら×3。錬金術師がいればランクが上がるたびに ×(1+2×台数)
     // 追加効果：錬金釜「錬金の火」＝ランクが上がるたび熱+2 ／ 錬金術師「大錬成」＝金の ×2 にも錬金術師が乗る
     transmute() {
       const a = countPlaced('alchemist');
-      if (item.tier >= 3) return this.mul(2 + (modOn('alchemist') ? a : 0));
+      if (item.tier >= 3) return this.mul(3 + (modOn('alchemist') ? 2 * a : 0));
       this.rankUp();
       if (modOn('transmuter')) item.heat = (item.heat || 0) + 2;
-      if (a > 0) this.boost(1 + a, '錬成', '#c9a2ff');
+      if (a > 0) this.boost(1 + 2 * a, '錬成', '#c9a2ff');
     },
     // 溶解炉：素材ランクを1つ下げる
     rankDown() {
@@ -3408,7 +3448,7 @@ function shipItem(item) {
   if (!R.quotaHit && R.phaseScore >= R.quota) {
     R.quotaHit = true;
     R.fever = true;
-    UI.banner(`第${R.phase}期 納期達成！`);
+    UI.banner(R.hi ? 'ハイスコア 自己ベスト更新！' : `第${R.phase}期 納期達成！`);
     Sfx.quota();
     flashScreen(0.7, '#ffd447');
     G.hitstop = Math.max(G.hitstop, 0.2);
@@ -3435,6 +3475,7 @@ function shipItem(item) {
 // どちらでもなければ、同じ期のまま次の日へ
 function endDay() {
   const R = G.run;
+  if (R.hi) return endHiDay();
   const cleared = R.phaseScore >= R.quota;
   const daysLeft = R.deadline - R.day; // 納期まで残り何日あるか（今日は入れない）
   if (!cleared && daysLeft <= 0) {
@@ -3486,6 +3527,61 @@ function endDay() {
   UI.showResult(firstWin);
 }
 
+// ---------- ハイスコアモード（完走のあと） ----------
+// ノルマはなく、HISCORE_DAYS 日のあいだに出荷した合計がハイスコアになる。落ちることはない
+// 画面のノルマの欄には、これまでの自己ベストを出す（超えると「自己ベスト更新」の演出）
+function startHiscore() {
+  const R = G.run;
+  R.hi = { startDay: R.day + 1, endDay: R.day + HISCORE_DAYS, best: G.meta.best.hiscore || 0 };
+  R.phaseScore = 0;
+  R.deadline = R.hi.endDay;
+  // 自己ベストがまだないときは、超える目標もないので演出は出さない
+  R.quotaBase = R.hi.best > 0 ? R.hi.best : Infinity;
+  R.quota = R.quotaBase;
+  R.lev = 0;
+  R.phaseFresh = false;
+}
+function endHiDay() {
+  const R = G.run;
+  const coinsAtEnd = R.coins;
+  const base = R.boss ? 6 : 4;
+  const interest = Math.min(R.interestCap, Math.floor(R.coins / 5));
+  const piggy = countPlaced('piggy') * Math.floor(R.coins / 10);
+  const cashback = modOn('exchange') ? Math.floor((R.dayStats.spent || 0) / 2) : 0;
+  const dayPts = DAY_PATENT;
+  R.stats.patentPts += dayPts;
+  R.coins += base + interest + piggy + cashback;
+  const daysLeft = R.hi.endDay - R.day;
+  const done = daysLeft <= 0;
+  R.hi.total = R.phaseScore;
+  // 最後の日：ハイスコアを記録して、桁に応じた特許（1兆を超えたぶん、1桁につき1）
+  let bonus = 0;
+  if (done) {
+    bonus = Math.max(0, Math.floor(Math.log10(Math.max(1, R.phaseScore))) - HISCORE_PATENT_FROM);
+    R.stats.bonusPatents += bonus;
+    R.hi.done = true;
+    R.hi.bonus = bonus;
+    R.hi.newBest = !devOn() && R.phaseScore > (G.meta.best.hiscore || 0);
+    bumpBest('hiscore', R.phaseScore);
+    checkHiAchievements(R.phaseScore);
+  }
+  R.lastReward = { base, interest, piggy, cashback, lev: 0, dayPts, clear: null, daysLeft, need: 0, hi: true };
+  R.stats.days = R.day;
+  R.stats.bestDay = Math.max(R.stats.bestDay, R.dayScore);
+  R.lastReward.records = recordDay(R, null);
+  checkDayAchievements(null, coinsAtEnd);
+  R.rewards = done ? [] : rollRewards(false);
+  G.state = 'result';
+  G.dirty = true;
+  UI.showResult(false);
+}
+function checkHiAchievements(total) {
+  if (devOn()) return;
+  unlockAch('endless15');
+  if (total >= 1e16) unlockAch('end8');
+  if (total >= 1e24) unlockAch('end10');
+}
+
 // 1日の終わりに見る実績。clear は、今日で納期を達成したときの内容（達成していなければ null）
 function checkDayAchievements(clear, coinsAtEnd) {
   const R = G.run;
@@ -3496,20 +3592,17 @@ function checkDayAchievements(clear, coinsAtEnd) {
     if (clear.phase >= 2) unlockAch('day6');
     if (clear.phase === PHASES) {
       unlockAch('win');
-      if (!Object.values(researchStore()).some((v) => v > 0)) unlockAch('win_nores');
+
       if (R.stats.levMin >= 1) unlockAch('lev_all');
-      if (R.stats.levSum >= 6) unlockAch('lev_sum');
+      if (R.stats.levSum >= 10) unlockAch('lev_sum');
       if ((G.meta.wins || 0) + 1 >= 3) unlockAch('wins3');
       if (R.day <= PHASES) unlockAch('early_all');
-      if (R.day <= 8) unlockAch('fast_win');
+      if (R.day <= 15) unlockAch('fast_win');
+      if (lev >= 1) unlockAch('lev_end');
     }
-    // エンドレス
     if (clear.phase >= 4) unlockAch('end4');
-    if (clear.phase >= 5) unlockAch('endless15');
-    if (clear.phase >= 6) unlockAch('end6');
-    if (clear.phase >= 8) unlockAch('end8');
-    if (clear.phase >= 10) unlockAch('end10');
-    if (clear.phase > PHASES && lev >= 3) unlockAch('lev_end');
+    if (clear.phase >= 5) unlockAch('end6');
+    if (clear.phase >= 4 && !Object.values(researchStore()).some((v) => v > 0)) unlockAch('win_nores');
     if (clear.oneDay) unlockAch('early1');
     // レバレッジ
     if (lev >= 1) unlockAch('lev1');
@@ -3570,7 +3663,7 @@ const REWARD_TYPES = [
   { id: 'kit', w: 3, ok: () => placedCount() + G.run.tray.length > 0 },
   { id: 'slot', w: 1, ok: (R) => R.day >= 3 },
   { id: 'patent', w: 1.5, ok: () => true },
-  { id: 'quota', w: 1.5, ok: () => true },
+  { id: 'quota', w: 1.5, ok: (R) => !R.hi },
   { id: 'shop', w: 2, ok: () => true },
   { id: 'reroll', w: 2, ok: () => true },
 ];
@@ -3650,8 +3743,8 @@ function nextDay() {
   const R = G.run;
   const clearedToday = !!(R.lastReward && R.lastReward.clear);
   R.day++;
-  // 納期を達成していたら、今日から次の期（納期は今日から PHASE_DAYS 日後）
-  if (clearedToday) {
+  // 納期を達成していたら、今日から次の期（納期は今日から PHASE_DAYS 日後）。ハイスコアモードでは期は進まない
+  if (clearedToday && !R.hi) {
     R.phase++;
     startPhase();
   }
@@ -3706,19 +3799,20 @@ function recordRun(R, gained, reason) {
 
   bumpBest('total', R.stats.totalShipped);
   bumpBest('patents', gained);
+  if (R.hi && R.hi.done) bumpBest('hiscore', R.hi.total || 0);
   const pb = R.prevBest || {};
-  const now = [['phase', R.stats.phasesCleared], ['item', R.stats.bestItem], ['dayScore', R.stats.bestDay], ['ratio', R.stats.bestRatio], ['lev', R.stats.levMax || 0], ['total', R.stats.totalShipped], ['patents', gained]];
+  const now = [['hiscore', R.hi && R.hi.done ? R.hi.total || 0 : 0], ['phase', R.stats.phasesCleared], ['item', R.stats.bestItem], ['dayScore', R.stats.bestDay], ['ratio', R.stats.bestRatio], ['lev', R.stats.levMax || 0], ['total', R.stats.totalShipped], ['patents', gained]];
   R.newRecords = devOn() ? [] : now.filter(([k, v]) => (pb[k] || 0) > 0 && v > pb[k]).map(([k]) => k);
   const board = placedMachines().map((m) => m.type);
   G.meta.history.unshift({
-    t: Date.now(), days: R.stats.days, phases: R.stats.phasesCleared, win: !!R.victory, reason, layout: R.layout.name,
+    t: Date.now(), days: R.stats.days, phases: R.stats.phasesCleared, win: !!R.victory, reason, layout: R.layout.name, hi: R.hi && R.hi.done ? R.hi.total || 0 : null,
     item: R.stats.bestItem, day: R.stats.bestDay, total: R.stats.totalShipped, lev: R.stats.levMax || 0,
     patents: gained, board, dev: devOn(),
   });
   G.meta.history.length = Math.min(G.meta.history.length, HISTORY_MAX);
 }
 
-// 特許 = 1日終えるごとに 0.5 ＋ 納期を達成するごとに 3×期 ×（レバレッジ倍率）＋ 完走で+5 ＋ 日報ボーナスの特許
+// 特許 = 1日終えるごとに 0.5 ＋ 納期を達成するごとに 3×期 ×（レバレッジ倍率）＋ 完走で+5 ＋ 日報ボーナスの特許 ＋ ハイスコアの桁のボーナス
 function patentsFor(R) {
   return Math.round(R.stats.patentPts) + (R.victory ? 5 : 0) + R.stats.bonusPatents;
 }
@@ -4942,14 +5036,14 @@ const UI = (() => {
       return;
     }
     setText('hud-day', String(R.day));
-    setText('hud-dayof', ` / 納期 ${R.deadline}`);
-    setText('hud-qlabel', `第${R.phase}期の出荷 / ノルマ${R.phase > PHASES ? '（エンドレス）' : ''}`);
+    setText('hud-dayof', R.hi ? ` / 最終日 ${R.hi.endDay}` : ` / 納期 ${R.deadline}`);
+    setText('hud-qlabel', R.hi ? 'ハイスコア / 自己ベスト' : `第${R.phase}期の出荷 / ノルマ`);
     setText('hud-score', fmt(G.dispScore));
-    setText('hud-quota', fmt(R.quota));
+    setText('hud-quota', isFinite(R.quota) ? fmt(R.quota) : '—');
     setText('hud-coins', String(R.coins));
     setText('hud-machines', `${slotsUsed()}/${dayCap()}`);
     setText('hud-items', G.state === 'run' ? `${R.itemsToday - R.spawned}` : `${R.itemsToday}`);
-    const on = R.boss ? `ボス：${R.boss.name}` : R.phase > PHASES ? `第${R.phase}期（エンドレス）` : `第${R.phase}期 / ${PHASES}`;
+    const on = R.boss ? `ボス：${R.boss.name}` : R.hi ? `ハイスコア あと${Math.max(0, R.hi.endDay - R.day + (G.state === 'result' ? 0 : 1))}日` : `第${R.phase}期 / ${PHASES}`;
     if (hudCache['hud-phase'] !== on) $('hud-phase').classList.toggle('boss', !!R.boss);
     setText('hud-phase', on);
     const ratio = G.dispScore / R.quota;
@@ -5116,6 +5210,11 @@ const UI = (() => {
   // 今の期のノルマと、納期までの残り
   function phaseDockHTML(R) {
     const left = R.deadline - R.day + 1; // 今日を入れた残り日数
+    if (R.hi) {
+      return `<div class="dock-est"><span>ハイスコアモード</span><b>${fmt(R.phaseScore)}</b></div>
+        <div class="dock-sub"><span>自己ベスト ${R.hi.best > 0 ? fmt(R.hi.best) : '—'}</span>
+          <span class="${left <= 1 ? 'last' : ''}">${left <= 1 ? '今日が最終日' : `あと${left}日`}</span></div>`;
+    }
     const need = Math.max(0, R.quota - R.phaseScore);
     return `<div class="dock-est"><span>第${R.phase}期のノルマ</span><b>${fmt(R.quota)}</b></div>
       <div class="dock-sub"><span>${R.phaseScore > 0 ? `これまで ${fmt(R.phaseScore)} ・ あと <b>${fmt(need)}</b>` : '納期までの合計で数えます'}</span>
@@ -5171,7 +5270,7 @@ const UI = (() => {
       <div class="tip">右クリック／<kbd>Esc</kbd>で選択解除。機械同士はクリックで入れ替え。</div>
       <div class="start-dock">
         ${placed > dayCap() ? `<div class="tip" style="color:var(--bad)">※ 設置枠は今日 ${dayCap()} まで。手持ちに戻してください</div>` : R.tray.length ? `<div class="tip" style="color:#ffb347">※ 手持ちの機械は稼働しません</div>` : ''}
-        ${levOpen() ? leverageHTML(R) : ''}
+        ${levOpen() && !R.hi ? leverageHTML(R) : ''}
         ${phaseDockHTML(R)}
         <button class="btn" id="btn-start">稼働開始 <span style="font-size:12px;opacity:.7">[Space]</span></button>
       </div>
@@ -5182,7 +5281,7 @@ const UI = (() => {
   function renderRun(R) {
     side.innerHTML = `
       <div class="section">
-        <div class="layout-name">第${R.phase}期 ・ DAY ${R.day} 稼働中（納期 DAY ${R.deadline}）</div>
+        <div class="layout-name">${R.hi ? `ハイスコアモード ・ DAY ${R.day} 稼働中（最終日 DAY ${R.hi.endDay}）` : `第${R.phase}期 ・ DAY ${R.day} 稼働中（納期 DAY ${R.deadline}）`}</div>
         ${bossHTML(R)}
       </div>
       <div class="section">
@@ -5247,11 +5346,11 @@ const UI = (() => {
       }
       case 'alchemist': {
         const a = countPlaced('alchemist') || 1;
-        return `錬金術師 ${a}台 → ランクが上がるたび <b>×${1 + a}</b>（錬金釜 ${countPlaced('transmuter')}台）`;
+        return `錬金術師 ${a}台 → ランクが上がるたび <b>×${1 + 2 * a}</b>（錬金釜 ${countPlaced('transmuter')}台）`;
       }
       case 'transmuter': {
         const a = countPlaced('alchemist');
-        return a ? `錬金術師 ${a}台：ランクが上がるたび <b>×${1 + a}</b>` : '';
+        return a ? `錬金術師 ${a}台：ランクが上がるたび <b>×${1 + 2 * a}</b>` : '';
       }
       case 'resonator':
         return countPlaced('splitter') + countPlaced('duplicator') || modOn('resonator') ? '' : '分裂ゲート・複製機がないので、今は +2 だけ';
@@ -5389,11 +5488,11 @@ const UI = (() => {
     const b = G.meta.best;
     showOverlay(`
       <h1>コンベア錬金</h1>
-      <p class="lead">ベルトの脇に機械を並べ、流れる原料を <b style="color:var(--accent)">足し算→掛け算</b> で膨らませろ。<br>${PHASE_DAYS}日ごとの納期までにノルマを出荷して、${PHASES}つの期を乗りこえろ。その先はエンドレス。</p>
+      <p class="lead">ベルトの脇に機械を並べ、流れる原料を <b style="color:var(--accent)">足し算→掛け算</b> で膨らませろ。<br>${PHASE_DAYS}日ごとの納期までにノルマを出荷して、第${PHASES}期の完走をめざせ。研究を重ねてやっと届く、遠い大口取引。</p>
       ${devOn() ? '<p class="lead" style="color:#ff8f8f;font-weight:700">🛠 テストモード中：研究は「研究所」で自由にオンオフした内容で遊びます</p>' : ''}
       <div class="menu-btns">
         <button class="btn" data-act="new">出勤する</button>
-        <button class="btn sub" data-act="research">研究所 <span class="patents" style="font-size:14px">特許 ${G.meta.patents}</span></button>
+        ${researchBtnHTML('研究所')}
         <button class="btn sub" data-act="trophies">実績 <span style="font-size:14px;color:var(--coin)">🏆 ${achCount()} / ${ACHIEVEMENTS.length}</span></button>
         <button class="btn sub" data-act="records">記録 <span style="font-size:14px;color:var(--muted)">最高 第${b.phase || 0}期</span></button>
         <div class="btn-row">
@@ -5401,7 +5500,7 @@ const UI = (() => {
           <button class="btn sub" data-act="tut-replay">チュートリアル</button>
         </div>
       </div>
-      <p class="lead" style="margin-top:16px;font-size:12px">最高記録：第${b.phase || 0}期${b.phase > PHASES ? '（エンドレス）' : ''} ・ 最高価値アイテム ${fmt(b.item || 0)} ・ 出勤回数 ${G.meta.runs}${b.lev ? ` ・ 最高レバレッジ Lv${b.lev}` : ''}</p>
+      <p class="lead" style="margin-top:16px;font-size:12px">最高記録：第${b.phase || 0}期${b.phase >= PHASES ? '（完走）' : ''}${b.hiscore ? ` ・ ハイスコア ${fmt(b.hiscore)}` : ''} ・ 最高価値アイテム ${fmt(b.item || 0)} ・ 出勤回数 ${G.meta.runs}${b.lev ? ` ・ 最高レバレッジ Lv${b.lev}` : ''}</p>
     `);
   }
   function showHowTo() {
@@ -5418,9 +5517,10 @@ const UI = (() => {
       納期達成の報酬：コイン（期が進むほど多い）＋ 超過ボーナス（ノルマの2倍ごとに+1）＋ 前倒しボーナス（残り1日につき+${EARLY_COIN}）＋ 豪華な日報ボーナス。</p>
       <p><b>5. 毎日変わるもの</b>：2日目からは盤面に<b>特設マス</b>が出ます（★強化マス＝置いた機械が2回発動、✕故障マス＝置いた機械が止まる）。日が終わるたびに<b>日報ボーナス</b>を3つから1つ選べます（改造キット・機械・設置枠・ノルマ減など）。4日ごとに<b>ボス日</b>（特殊ルール）。</p>
       <p><b>組み合わせ</b>：1台では地味でも、組むと化ける機械がたくさんあります。説明文の「何に反応するか」に注目すると、機械どうしのつながりが見えてきます。自分だけの必勝パターンを見つけよう。</p>
-      <p><b>素材ランク</b>：錬金釜（ベルト型）を1台通るごとに 石→銅→銀→金。出荷時に 銅×2 / 銀×3 / 金×4。</p>
-      <p><b>完走とエンドレス</b>：第${PHASES}期の納期を達成すると完走。そのまま <b>エンドレス</b> に進めます。エンドレスのノルマは期ごとに伸びが急になり、そのぶん納期達成の特許も増えます。どこまで行けるかが記録になります。</p>
-      <p><b>レバレッジ</b>（1回完走すると使える）：期の最初の日に、「稼働開始」ボタンの上の ◀ ▶ で Lv を決められます。1つ上げるごとに <b>その期のノルマ×${LEV_QMUL}</b>、そのかわり <b>納期達成のコイン+50%・特許+50%</b>。</p>
+      <p><b>素材ランク</b>：錬金釜（ベルト型）を1台通るごとに 石→銅→銀→金。出荷時に 銅×2 / 銀×4 / 金×8。</p>
+      <p><b>完走とハイスコアモード</b>：ゴールは第${PHASES}期の納期。後の期ほどノルマが急に重くなり、研究なしではまず届きません。届かなかったランでも特許はたまるので、研究を進めて少しずつ遠くの期をめざします（後の期ほど、納期達成の特許も多い）。<br>
+      完走したら <b>ハイスコアモード</b>（${HISCORE_DAYS}日間）に挑めます。ノルマはなく、出荷した合計がハイスコアとして記録されます。</p>
+      <p><b>レバレッジ</b>（第3期まで届くと使える）：期の最初の日に、「稼働開始」ボタンの上の ◀ ▶ で Lv を決められます。1つ上げるごとに <b>その期のノルマ×${LEV_QMUL}</b>、そのかわり <b>納期達成のコイン+50%・特許+50%</b>。</p>
       <p><b>強い機械には代償</b>：大型（設置枠を2つ使う）、維持費（毎日コインを払う）、コインを払う、アイテムが消える…など。強い組み合わせほど、そろえるのが難しくなっています。</p>
       <p><b>研究所</b>：特許で、機械ごとの <b>習熟</b> を1段ずつ進められます。習熟を最後まで進めると、その機械の <b>追加効果</b>（新しい働き）を研究できます。新しい機械の設計図もここで。</p>
       <div class="menu-btns"><button class="btn sub" data-act="title">戻る</button></div>
@@ -5661,15 +5761,46 @@ const UI = (() => {
       : '';
     if (firstWin) {
       showOverlay(`
-        <h2 style="color:var(--coin)">🎉 全${PHASES}期の納期達成！ 完走です</h2>
+        <h2 style="color:var(--coin)">🏆 第${PHASES}期の納期達成！ 完走です</h2>
         ${big}
         ${lines}
-        <p>このまま<b>エンドレス</b>で限界に挑むか、退職して特許を受け取るか。<br>エンドレスのノルマは期ごとに伸びが急になり、そのぶん納期達成の特許も増えます（次は第${R.phase + 1}期：ノルマ ${fmt(runQuota(R.phase + 1))}・特許 ${PHASE_PATENT * (R.phase + 1)}）。</p>
+        <div class="hi-invite">
+          <div class="t">このまま <b>ハイスコアモード</b> に挑めます</div>
+          <div class="d">ノルマなしの ${HISCORE_DAYS}日間で、出荷した合計がハイスコアになります（落ちることはありません）。${G.meta.best.hiscore ? `自己ベストは <b>${fmt(G.meta.best.hiscore)}</b>。` : ''}<br>
+          最後に、1兆を超えた桁の数だけ特許がもらえます。</div>
+        </div>
         ${tipHTML()}
         <div class="menu-btns">
-          <button class="btn" data-act="next">エンドレスに挑む</button>
-          <button class="btn sub" data-act="retire">退職する（特許 +${patentsFor(R)}）</button>
+          <button class="btn" data-act="hiscore">ハイスコアモードに挑む（${HISCORE_DAYS}日間）</button>
+          <button class="btn sub" data-act="retire">ここで退職する（特許 +${patentsFor(R)}）</button>
         </div>`);
+    } else if (R.hi) {
+      // ハイスコアモードの1日の終わり
+      const best = R.hi.best;
+      const over = best > 0 && R.phaseScore > best;
+      const hiBig = `<div class="result-big good"><span class="rb-l">今日の出荷</span><span id="count-up">0</span></div>
+        <div class="phase-prog ${over ? 'done' : ''}">
+          <div class="pp-row"><span>ハイスコア（合計）</span><span><b>${fmt(R.phaseScore)}</b>${best > 0 ? ` / 自己ベスト ${fmt(best)}` : ''}</span></div>
+          ${best > 0 ? `<div class="pp-bar"><div style="width:${(Math.min(1, R.phaseScore / best) * 100).toFixed(1)}%"></div></div>` : ''}
+          <div class="pp-note">${R.hi.done ? (R.hi.newBest ? '🎉 ハイスコア 自己ベスト更新！' : 'ハイスコアモード終了') : over ? '自己ベストを超えています！' : `あと${rw.daysLeft}日`}</div>
+        </div>`;
+      if (R.hi.done) {
+        showOverlay(`
+          <h2 style="color:var(--coin)">🏁 ハイスコアモード終了</h2>
+          ${hiBig}
+          ${lines}
+          <div class="result-line anim" style="--d:1.6s"><span>ハイスコアの特許（1兆を超えた桁の数）</span><span class="v" style="color:var(--blue)">+${R.hi.bonus}</span></div>
+          ${tipHTML()}
+          <div class="menu-btns"><button class="btn" data-act="hi-finish">結果を見る</button></div>`);
+      } else {
+        showOverlay(`
+          <h2>ハイスコアモード DAY ${R.day}</h2>
+          ${hiBig}
+          ${lines}
+          ${nextDayHTML(R)}
+          ${tipHTML()}
+          ${rewardsHTML(R)}`);
+      }
     } else {
       showOverlay(`
         <h2 ${c ? 'style="color:var(--coin)"' : ''}>${c ? `🎉 第${c.phase}期 納期達成！` : `DAY ${R.day} 終了`}</h2>
@@ -5708,30 +5839,63 @@ const UI = (() => {
     return `${boss}<p class="lead next-phase">次は <b>第${p}期</b>：ノルマ <b>${fmt(runQuota(p))}</b>（今の ${fmtMult(Math.round((runQuota(p) / R.quota) * 10) / 10)}倍）<br>
       納期は DAY ${deadlineFrom(R.day + 1)}。明日から <b>${PHASE_DAYS}日</b> あります</p>`;
   }
+  // 研究所へのボタン。研究できるものがあれば、光って目立つ大きなボタンになる
+  function researchBtnHTML(label, big) {
+    const n = researchAvail();
+    const gap = nextResearchGap();
+    if (n > 0) {
+      return `<button class="btn research-go ${big ? 'big' : ''}" data-act="research">
+          <span class="rg-ico">🔬</span><span class="rg-body"><b>${label}へ</b><span>いま研究できるもの <b>${n}件</b> ・ 特許 ${G.meta.patents}</span></span>
+          <span class="rg-badge">研究できる！</span></button>`;
+    }
+    return `<button class="btn sub" data-act="research">🔬 ${label} <span class="patents" style="font-size:14px">特許 ${G.meta.patents}</span>${gap ? `<span class="rg-gap">次の研究まで あと${gap}</span>` : ''}</button>`;
+  }
+  // 次に研究できるようになるまで、あと何特許か（いちばん安い研究で）
+  function nextResearchGap() {
+    let min = Infinity;
+    for (const r of RESEARCH) {
+      const l = rlv(r.id);
+      if (l < r.max && researchOpen(r)) min = Math.min(min, r.cost(l));
+    }
+    return isFinite(min) && min > G.meta.patents ? min - G.meta.patents : 0;
+  }
   function showGameOver(gained, reason) {
     const R = G.run;
     const failed = reason === 'fail';
-    const title = failed ? '納期に間に合わず…解雇されました' : reason === 'retire' ? '円満退職！' : 'このランを終了しました';
+    const hiDone = reason === 'hiscore';
+    const title = failed ? '納期に間に合わず…解雇されました' : hiDone ? '🏁 ハイスコアモード終了' : reason === 'retire' ? '円満退職！' : 'このランを終了しました';
+    const canResearch = researchAvail() > 0;
     showOverlay(`
       <h2 style="color:${failed ? 'var(--bad)' : 'var(--coin)'}">${title}</h2>
       ${failed ? `<div class="result-big bad"><span class="rb-l">第${R.phase}期の合計</span>${fmt(R.phaseScore)} <span style="font-size:18px;color:var(--muted)">/ ${fmt(R.quota)}</span></div>` : ''}
-
-      <div class="result-line"><span>達成した納期</span><span class="v" style="color:var(--text)">${R.stats.phasesCleared}期（${R.stats.days}日）</span></div>
+      ${hiDone ? `<div class="result-big good"><span class="rb-l">ハイスコア</span>${fmt(R.hi.total || 0)}${R.hi.newBest ? ' <span class="rec-badge">自己ベスト更新</span>' : ''}</div>` : ''}
+      <div class="patent-gain">
+        <span class="pg-l">獲得した特許${R.stats.levSum ? `（レバレッジ合計 ${R.stats.levSum}）` : ''}</span>
+        <span class="pg-v">+<span id="patent-up">0</span></span>
+        <span class="pg-s">特許の合計 <b>${G.meta.patents}</b></span>
+      </div>
+      <div class="result-line"><span>達成した納期</span><span class="v" style="color:var(--text)">第${R.stats.phasesCleared}期まで（${R.stats.days}日）${R.stats.phasesCleared >= PHASES ? ' ・ 完走' : ` ・ ゴールの第${PHASES}期まで あと${PHASES - R.stats.phasesCleared}期`}</span></div>
       <div class="result-line"><span>最高価値アイテム</span><span class="v" style="color:var(--text)">${fmt(R.stats.bestItem)}</span></div>
       <div class="result-line"><span>総出荷額</span><span class="v" style="color:var(--text)">${fmt(R.stats.totalShipped)}</span></div>
-      <div class="result-line"><span>獲得した特許${R.stats.levSum ? `（レバレッジ合計 ${R.stats.levSum}）` : ''}</span><span class="v" style="color:var(--blue)">+${gained}</span></div>
-
       ${R.newRecords && R.newRecords.length ? `<p class="lead rec-line">🎉 自己ベスト更新：${R.newRecords.map((k) => RECORD_NAMES[k]).join('・')}</p>` : ''}
       ${R.newAch && R.newAch.length ? `<p class="lead" style="color:var(--coin);font-weight:900">🏆 このランで解除した実績：${R.newAch.map((id) => ACHIEVEMENTS.find((a) => a.id === id).name).join('・')}</p>` : ''}
-      <div class="menu-btns">
-        <button class="btn" data-act="new">もう一度出勤する</button>
-        <button class="btn sub" data-act="research">研究所（特許 ${G.meta.patents}）</button>
-        <button class="btn sub" data-act="trophies">実績 🏆 ${achCount()} / ${ACHIEVEMENTS.length}</button>
-        <button class="btn sub" data-act="records">記録</button>
-        <button class="btn sub" data-act="copy-result">結果をコピー</button>
-        <button class="btn sub" data-act="title">タイトルへ</button>
+      ${canResearch ? `<p class="lead go-hint">特許がたまりました。研究で機械を育てると、もっと先の期に届きます</p>` : ''}
+      <div class="menu-btns over-btns">
+        ${canResearch ? researchBtnHTML('研究所', true) : ''}
+        <button class="btn ${canResearch ? 'sub again' : ''}" data-act="new">▶ もう一度出勤する</button>
+        ${canResearch ? '' : researchBtnHTML('研究所')}
+        <div class="btn-row">
+          <button class="btn sub" data-act="trophies">🏆 実績 ${achCount()} / ${ACHIEVEMENTS.length}</button>
+          <button class="btn sub" data-act="records">📈 記録</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn sub" data-act="copy-result">結果をコピー</button>
+          <button class="btn sub" data-act="title">タイトルへ</button>
+        </div>
       </div>
       ${tipHTML()}`);
+    const el = $('patent-up');
+    if (el) countUp(el, gained, 0.9);
   }
 
   // ---------- ヒント（日の終わりの画面） ----------
@@ -5746,13 +5910,14 @@ const UI = (() => {
   }
 
   // ---------- 記録（自己ベストと最近のラン） ----------
-  const RECORD_NAMES = { phase: '達成した納期', day: '到達した日', item: '最高価値アイテム', dayScore: '1日の出荷額', ratio: '超過倍率', lev: 'レバレッジ', total: '1ランの総出荷額', patents: '1ランの特許' };
+  const RECORD_NAMES = { hiscore: 'ハイスコア', phase: '達成した納期', day: '到達した日', item: '最高価値アイテム', dayScore: '1日の出荷額', ratio: '超過倍率', lev: 'レバレッジ', total: '1ランの総出荷額', patents: '1ランの特許' };
   const fmtDate = (t) => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
   const ratioTxt = (r) => '×' + (r >= 1000 ? fmt(r) : (r || 0).toFixed(1));
   function runResult(h) {
     // 納期制になってからのラン（phases がある）
     if (h.phases != null) {
-      if (h.win && h.phases > PHASES) return `完走＋エンドレス 第${h.phases}期`;
+      if (h.win && h.hi != null) return `完走＋ハイスコア ${fmt(h.hi)}`;
+      if (h.win && h.phases > PHASES) return `完走＋エンドレス 第${h.phases}期（前のルール）`;
       if (h.win) return `完走（${h.days}日）`;
       return h.reason === 'fail' ? `第${h.phases + 1}期で解雇` : `第${h.phases + 1}期で終了`;
     }
@@ -5775,7 +5940,7 @@ const UI = (() => {
     const b = G.meta.best;
     return [
       'コンベア錬金の自己ベスト',
-      `最高 第${b.phase || 0}期${b.phase > PHASES ? '（エンドレス）' : ''} ／ 完走 ${G.meta.wins || 0}回（出勤 ${G.meta.runs}回）`,
+      `最高 第${b.phase || 0}期${b.phase >= PHASES ? '（完走）' : ''} ／ 完走 ${G.meta.wins || 0}回（出勤 ${G.meta.runs}回）${b.hiscore ? ` ／ ハイスコア ${fmt(b.hiscore)}` : ''}`,
       `最高価値アイテム ${fmt(b.item || 0)} ／ 1日の最高出荷額 ${fmt(b.dayScore || 0)} ／ 最高レバレッジ Lv${b.lev || 0}`,
     ].join('\n');
   }
@@ -5805,7 +5970,8 @@ const UI = (() => {
   function showRecords() {
     const b = G.meta.best;
     const cards = [
-      ['達成した納期', `第${b.phase || 0}期`, (b.phase || 0) > PHASES ? `エンドレス ${b.phase - PHASES}期ぶん` : (b.phase || 0) >= PHASES ? '完走あり' : `完走まであと ${PHASES - (b.phase || 0)}期`],
+      ['達成した納期', `第${b.phase || 0}期`, (b.phase || 0) >= PHASES ? '完走あり' : `ゴールの第${PHASES}期まで あと ${PHASES - (b.phase || 0)}期`],
+      ['ハイスコア', b.hiscore ? fmt(b.hiscore) : '-', '完走したあとのハイスコアモード'],
       ['完走', `${G.meta.wins || 0}回`, `出勤 ${G.meta.runs}回`],
       ['最高価値アイテム', fmt(b.item || 0), 'アイテム1個の価値'],
       ['1日の出荷額', fmt(b.dayScore || 0), '1日でいちばん多く出荷した額'],
@@ -5966,6 +6132,17 @@ const UI = (() => {
         hideOverlay();
         nextDay();
         if (G.run.boss) banner(`ボス日：${G.run.boss.name}`, true);
+        break;
+      case 'hiscore':
+        // 完走したあと：ハイスコアモードを始める
+        startHiscore();
+        hideOverlay();
+        nextDay();
+        banner('ハイスコアモード');
+        break;
+      case 'hi-finish':
+        hideOverlay();
+        endRun('hiscore');
         break;
       case 'retire':
         hideOverlay();
